@@ -47,7 +47,7 @@
                 <div>
                     <div class="flex items-center gap-2">
                         <h1 class="text-xl font-extrabold text-[#090c1d]">활동지원사 수료증 센터</h1>
-                        <span class="bg-[#f8f9fa] border border-[#e8e8e8] text-[#6647f0] text-[10px] font-mono font-bold px-2 py-0.5 btn-pill uppercase tracking-wider">v3.4 STABLE</span>
+                        <span class="bg-[#f8f9fa] border border-[#e8e8e8] text-[#6647f0] text-[10px] font-mono font-bold px-2 py-0.5 btn-pill uppercase tracking-wider">v3.5 FIXED</span>
                     </div>
                     <p class="text-xs text-[#646464] mt-0.5">수원 장애인복지관 교육 이수 통합 관리 플랫폼</p>
                 </div>
@@ -146,7 +146,7 @@
                 <div class="bg-white p-6 rounded-[16px] border border-[#e8e8e8] card-shadow">
                     <div class="flex items-center justify-between mb-3">
                         <h3 class="text-xs font-bold uppercase tracking-wider text-[#838383] font-mono">내 API 키 활성도 상태</h3>
-                        <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-xs text-[#0091ff] hover:underline font-bold font-mono">🔗 Google AI Studio에서 API 키 발급받기 ↗</a>
+                        <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-xs text-[#0091ff] hover:underline font-bold font-mono">🔗 Google AI Studio 바로가기 ↗</a>
                     </div>
                     <div id="api-status-container" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
                 </div>
@@ -238,13 +238,6 @@
         <div class="bg-white p-8 rounded-[20px] max-w-md w-full card-shadow mx-4">
             <h3 class="text-xl font-extrabold text-[#090c1d] mb-1">관리자 및 API 키 등록</h3>
             <p class="text-xs text-[#646464] mb-4">Gemini API 키를 등록하면 수료증 제출 시 자동 분석이 구동됩니다.</p>
-            
-            <div class="mb-5 p-3.5 bg-purple-50 rounded-[12px] border border-purple-100 text-xs space-y-1.5">
-                <p class="font-bold text-[#6647f0]">💡 API 키 발급 방법</p>
-                <p class="text-[#646464]">1. 아래 링크를 눌러 구글 AI Studio에 로그인합니다.</p>
-                <p class="text-[#646464]">2. <strong>'Create API key'</strong>를 눌러 키를 생성하고 복사합니다.</p>
-                <a href="https://aistudio.google.com/app/apikey" target="_blank" class="inline-block font-bold text-[#0091ff] hover:underline pt-1">🔗 Google AI Studio 바로가기 (API 키 발급) ↗</a>
-            </div>
 
             <form onsubmit="handleSaveApiKey(event)" class="space-y-4">
                 <div>
@@ -261,7 +254,7 @@
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-[#202020] uppercase tracking-wider mb-1 font-mono">Google Gemini API Key</label>
-                    <input type="password" id="reg-apikey" required placeholder="AIzaSy..." class="w-full px-4 py-3 rounded-[9px] border border-[#d4d4d4] text-sm focus:border-[#6647f0] focus:outline-none">
+                    <input type="password" id="reg-apikey" required placeholder="AQ... 또는 AIzaSy..." class="w-full px-4 py-3 rounded-[9px] border border-[#d4d4d4] text-sm focus:border-[#6647f0] focus:outline-none">
                 </div>
                 <div class="flex gap-2 pt-2">
                     <button type="button" onclick="closeApiKeyModal()" class="flex-1 py-3 border border-[#e8e8e8] text-xs font-bold rounded-full hover:bg-gray-50 transition">취소</button>
@@ -459,7 +452,7 @@
             });
         }
 
-        // 🤖 Gemini AI 분석 함수
+        // 🤖 Gemini AI 분석 함수 (최신 모델 호환 적용)
         async function runAiAnalysisFromBase64(base64Data, mimeType) {
             let admins = JSON.parse(localStorage.getItem('admin_accounts') || '[]');
             let activeApiKey = '';
@@ -478,14 +471,15 @@
             }
 
             if (!activeApiKey) {
-                return null; // API 키 없음 신호
+                return null;
             }
 
             try {
                 const prompt = `이 경기도평생학습포털(GSEEK) 수료증 이미지에서 다음 항목을 정확히 추출하여 반드시 아래 JSON 구조체로만 반환하세요:
 {"courseName": "노인일자리 사례로 배우는 안전사고 예방교육", "trainingHours": 6}`;
 
-                const apiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${activeApiKey}`, {
+                // 🛠️ 최신 gemini-2.5-flash 모델 엔드포인트 호출
+                const apiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${activeApiKey}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -502,7 +496,7 @@
                 const result = await apiRes.json();
                 if (result.error) {
                     console.error("Gemini API Error:", result.error);
-                    return { courseName: 'API 키 인증 오류', trainingHours: 0 };
+                    return { courseName: 'AI 판독 오류 (' + result.error.message + ')', trainingHours: 0 };
                 }
 
                 const parsed = JSON.parse(result.candidates[0].content.parts[0].text);
@@ -528,7 +522,7 @@
             let admins = JSON.parse(localStorage.getItem('admin_accounts') || '[]');
             let hasAnyKey = admins.some(a => a.apiKey && a.apiKey.trim().length > 5);
             if (!hasAnyKey) {
-                alert('API 키가 활성화되어 있지 않습니다. API 키를 다시 입력해 주세요.');
+                alert('API 키가 활성화되어 있지 않습니다. API 키를 등록해 주세요.');
                 openApiKeyModal();
                 return;
             }
@@ -581,7 +575,7 @@
             }
         }
 
-        // 2. 관리자 목록 조회 (수동 재분석 버튼 포함)
+        // 2. 관리자 목록 조회
         async function fetchCertificates() {
             if (!supabaseClient) return;
 

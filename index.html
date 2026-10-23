@@ -33,12 +33,6 @@
         .card-shadow {
             box-shadow: rgba(0, 0, 0, 0.04) 0px 4px 12px 0px;
         }
-        .conic-border {
-            position: relative;
-            border-radius: 9999px;
-            padding: 2px;
-            background: conic-gradient(from 90deg, #7d5be7, #bc3fda, #fa24ce, #fb49a5, #fd8461, #4fb9fa, #0091ff, #7d5be7);
-        }
     </style>
 </head>
 <body class="min-h-screen flex flex-col antialiased">
@@ -188,21 +182,23 @@
     <!-- 스크립트 영역 -->
     <script>
         // ==========================================
-        // 🛠️ 본인의 Supabase 정보로 교체해 주세요!
+        // 🛠️ 제공해주신 Supabase URL 및 키 내장 완료
         // ==========================================
-        const SUPABASE_URL = 'https://YOUR_SUPABASE_PROJECT_URL.supabase.co';
-        const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+        const SUPABASE_URL = 'https://hnwwgjdjrxkgguudockp.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_0GGJULV8jinRZR2J_JH5gw_9A-zsqtE';
 
         let supabaseClient = null;
 
-        // 안전한 Supabase 클라이언트 초기화
-        window.addEventListener('DOMContentLoaded', () => {
+        // 안전한 Supabase 클라이언트 초기화 함수
+        function initSupabase() {
             if (window.supabase && typeof window.supabase.createClient === 'function') {
                 supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
             } else {
-                console.error("Supabase 라이브러리를 로드하지 못했습니다.");
+                setTimeout(initSupabase, 200); // 라이브러리가 아직 로드 안 되었으면 재시도
             }
-        });
+        }
+
+        window.addEventListener('DOMContentLoaded', initSupabase);
 
         // 탭 전환
         function switchTab(tab) {
@@ -227,7 +223,8 @@
         async function handleCertificateUpload(e) {
             e.preventDefault();
             if (!supabaseClient) {
-                alert("Supabase 클라이언트가 초기화되지 않았습니다. SUPABASE_URL과 ANON_KEY를 확인해 주세요.");
+                alert("Supabase 시스템에 연결 중입니다. 1~2초 후 다시 [수료증 제출 완료]를 눌러주세요.");
+                initSupabase();
                 return;
             }
 
@@ -243,11 +240,13 @@
                 const fileExt = file.name.split('.').pop();
                 const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
 
+                // Supabase Storage 업로드
                 const { data: fileData, error: fileError } = await supabaseClient.storage.from('certificates').upload(fileName, file);
                 if (fileError) throw fileError;
 
                 const { data: urlData } = supabaseClient.storage.from('certificates').getPublicUrl(fileName);
 
+                // Supabase DB 저장
                 const { error: dbError } = await supabaseClient.from('certificates').insert([{
                     assistant_name: name,
                     birth_date: birth,

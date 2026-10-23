@@ -8,8 +8,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Supabase JS Client CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-    <!-- SheetJS (Excel 내보내기용 CDN) -->
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <!-- ExcelJS CDN (고급 스타일, 셀 병합, SUBTOTAL 함수 지원) -->
+    <script src="https://cdn.jsdelivr.net/npm/exceljs@4.3.0/dist/exceljs.min.js"></script>
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=Sometype+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
@@ -47,7 +47,7 @@
                 <div>
                     <div class="flex items-center gap-2">
                         <h1 class="text-xl font-extrabold text-[#090c1d]">활동지원사 수료증 센터</h1>
-                        <span class="bg-[#f8f9fa] border border-[#e8e8e8] text-[#6647f0] text-[10px] font-mono font-bold px-2 py-0.5 btn-pill uppercase tracking-wider">v4.2 DELETE</span>
+                        <span class="bg-[#f8f9fa] border border-[#e8e8e8] text-[#6647f0] text-[10px] font-mono font-bold px-2 py-0.5 btn-pill uppercase tracking-wider">v4.3 EXCEL-PRO</span>
                     </div>
                     <p class="text-xs text-[#646464] mt-0.5">수원 장애인복지관 교육 이수 통합 관리 플랫폼</p>
                 </div>
@@ -149,7 +149,7 @@
                             🔄 새로고침
                         </button>
                         <button onclick="exportToExcel()" class="px-5 py-2.5 text-xs font-bold bg-[#00c07a] hover:bg-[#00a86b] text-white btn-pill transition shadow-sm flex items-center gap-1.5">
-                            📊 맞춤 엑셀 다운로드 (.xlsx)
+                            📊 맞춤 서식 엑셀 다운로드 (.xlsx)
                         </button>
                     </div>
                 </div>
@@ -689,14 +689,12 @@
             }).join('');
         }
 
-        // 🗑️ 수료증 항목 삭제 기능
         async function deleteCertificateRow(id, name, imageUrl) {
             if (!confirm(`정말로 ${name} 지원사님의 수료증 내역을 삭제하시겠습니까?`)) {
                 return;
             }
 
             try {
-                // 1) Storage 이미지 파일 삭제
                 if (imageUrl) {
                     const fileName = imageUrl.split('/').pop();
                     if (fileName) {
@@ -704,7 +702,6 @@
                     }
                 }
 
-                // 2) DB 레코드 삭제
                 const { error } = await supabaseClient.from('certificates').delete().eq('id', id);
                 if (error) throw error;
 
@@ -763,34 +760,127 @@
             }
         }
 
-        // 4. Excel 내보내기
+        // 📊 [핵심 업그레이드] ExcelJS 기반 서식/너비/높이/SUBTOTAL 함수 완벽 내보내기
         async function exportToExcel() {
             if (!supabaseClient) return;
 
             const { data, error } = await supabaseClient.from('certificates').select('*').order('created_at', { ascending: false });
-            if (error || !data) return alert('데이터를 내보내지 못했습니다.');
+            if (error || !data || data.length === 0) return alert('내보낼 수료증 데이터가 없습니다.');
 
-            const totalHours = data.reduce((sum, item) => sum + (parseInt(item.training_hours) || 0), 0);
+            // ExcelJS 워크북 및 시트 생성
+            const workbook = new ExcelJS.Workbook();
+            const worksheet = workbook.addWorksheet('교육수료목록');
 
-            let excelRows = [
-                ["장애인활동지원 온라인 교육 목록", "", "", ""],
-                [`총 이수 누적시간 (필터 반영):`, totalHours, "", ""],
-                ["지원사 성명", "생년월일", "교육시간", "이수 교육과정명"]
+            // 1. 열 너비 지정 (A:13, B:13, C:9, D:40)
+            worksheet.columns = [
+                { key: 'name', width: 13 },
+                { key: 'birth', width: 13 },
+                { key: 'hours', width: 9 },
+                { key: 'course', width: 40 }
             ];
 
-            data.forEach(item => {
-                excelRows.push([
-                    item.assistant_name,
-                    item.birth_date,
-                    item.training_hours,
-                    item.course_name
-                ]);
+            // 2. 1행 : 메인 타이틀 (높이: 35)
+            const titleRow = worksheet.getRow(1);
+            titleRow.height = 35;
+            worksheet.mergeCells('A1:D1');
+            const titleCell = worksheet.getCell('A1');
+            titleCell.value = '장애인활동지원 온라인 교육 목록';
+            titleCell.font = { name: '맑은 고딕', size: 16, bold: true };
+            titleCell.alignment = { vertical: 'middle', horizontal: 'center' };
+
+            // 3. 2행 : 총 이수 누적시간 요약 (높이: 25)
+            const summaryRow = worksheet.getRow(2);
+            summaryRow.height = 25;
+            
+            const labelCell = worksheet.getCell('A2');
+            labelCell.value = '총 이수 누적시간 (필터 반영):';
+            labelCell.font = { name: '맑은 고딕', size: 10, bold: true };
+            labelCell.alignment = { vertical: 'middle', horizontal: 'center' };
+            // A2 셀 옅은 회색 채우기 (#F2F2F2)
+            labelCell.fill = {
+                type: 'pattern',
+                pattern: 'solid',
+                fgColor: { argb: 'FFF2F2F2' }
+            };
+
+            // B2, C2 셀 병합 후 SUBTOTAL(109) 동적 엑셀 함수 적용
+            const lastRowIndex = data.length + 3; // 데이터 끝 행 위치
+            worksheet.mergeCells(`B2:C2`);
+            const formulaCell = worksheet.getCell('B2');
+            formulaCell.value = {
+                formula: `SUBTOTAL(109, C4:C${lastRowIndex})&"시간"`,
+                result: `${data.reduce((sum, item) => sum + (parseInt(item.training_hours) || 0), 0)}시간`
+            };
+            formulaCell.font = { name: '맑은 고딕', size: 11, bold: true };
+            formulaCell.alignment = { vertical: 'middle', horizontal: 'center' };
+
+            // 4. 3행 : 헤더 (높이: 25)
+            const headerRow = worksheet.getRow(3);
+            headerRow.height = 25;
+            const headers = ['지원사 성명', '생년월일', '교육시간', '이수 교육과정명'];
+            
+            headers.forEach((text, idx) => {
+                const cell = headerRow.getCell(idx + 1);
+                cell.value = text;
+                cell.font = { name: '맑은 고딕', size: 11, bold: true };
+                cell.alignment = { vertical: 'middle', horizontal: 'center' };
+                // 3행 헤더 연한 청회색 채우기 (#D9E1F2)
+                cell.fill = {
+                    type: 'pattern',
+                    pattern: 'solid',
+                    fgColor: { argb: 'FFD9E1F2' }
+                };
             });
 
-            const worksheet = XLSX.utils.aoa_to_sheet(excelRows);
-            const workbook = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(workbook, worksheet, "교육수료목록");
-            XLSX.writeFile(workbook, "장애인활동지원_온라인교육목록_내보내기.xlsx");
+            // 5. 4행부터 데이터 삽입 (높이: 20)
+            data.forEach((item, index) => {
+                const rowIndex = index + 4;
+                const row = worksheet.getRow(rowIndex);
+                row.height = 20;
+
+                const nameCell = row.getCell(1);
+                nameCell.value = item.assistant_name;
+                nameCell.alignment = { vertical: 'middle', horizontal: 'center' };
+
+                const birthCell = row.getCell(2);
+                birthCell.value = item.birth_date;
+                birthCell.alignment = { vertical: 'middle', horizontal: 'center' };
+
+                const hoursCell = row.getCell(3);
+                hoursCell.value = parseInt(item.training_hours) || 0;
+                hoursCell.alignment = { vertical: 'middle', horizontal: 'center' };
+
+                const courseCell = row.getCell(4);
+                courseCell.value = item.course_name;
+                courseCell.alignment = { vertical: 'middle', horizontal: 'left' };
+            });
+
+            // 6. 전체 표 영역에 자동 필터(Auto Filter) 설정 및 회색 테두리 적용
+            worksheet.autoFilter = `A3:D${lastRowIndex}`;
+
+            const thinBorder = {
+                top: { style: 'thin', color: { argb: 'FFD9D9D9' } },
+                left: { style: 'thin', color: { argb: 'FFD9D9D9' } },
+                bottom: { style: 'thin', color: { argb: 'FFD9D9D9' } },
+                right: { style: 'thin', color: { argb: 'FFD9D9D9' } }
+            };
+
+            for (let r = 1; r <= lastRowIndex; r++) {
+                const row = worksheet.getRow(r);
+                for (let c = 1; c <= 4; c++) {
+                    row.getCell(c).border = thinBorder;
+                }
+            }
+
+            // 7. 파일 저장 및 바로 다운로드
+            const buffer = await workbook.xlsx.writeBuffer();
+            const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `장애인활동지원_온라인교육목록_${new Date().toISOString().slice(0, 10)}.xlsx`;
+            a.click();
+            window.URL.revokeObjectURL(url);
         }
     </script>
 </body>

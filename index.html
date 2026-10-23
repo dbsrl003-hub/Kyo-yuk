@@ -35,44 +35,37 @@
         }
     </style>
 </head>
-<body class="min-h-screen flex flex-col antialiased">
+<body class="min-h-screen flex flex-col antialiased justify-between">
 
     <!-- Header / Navbar -->
-    <header class="bg-white border-b border-[#e8e8e8] sticky top-0 z-50">
+    <header class="bg-white border-b border-[#e8e8e8] sticky top-0 z-40">
         <div class="max-w-[1200px] mx-auto px-6 h-20 flex items-center justify-between">
-            <div class="flex items-center gap-3">
+            <div class="flex items-center gap-3 cursor-pointer" onclick="goToSubmitView()">
                 <div class="w-10 h-10 bg-[#202020] text-white rounded-full flex items-center justify-center font-extrabold text-xl font-display">
                     위
                 </div>
                 <div>
                     <div class="flex items-center gap-2">
                         <h1 class="text-xl font-extrabold text-[#090c1d]">활동지원사 수료증 센터</h1>
-                        <span class="bg-[#f8f9fa] border border-[#e8e8e8] text-[#6647f0] text-[10px] font-mono font-bold px-2 py-0.5 btn-pill uppercase tracking-wider">v2.0 PRO</span>
+                        <span class="bg-[#f8f9fa] border border-[#e8e8e8] text-[#6647f0] text-[10px] font-mono font-bold px-2 py-0.5 btn-pill uppercase tracking-wider">v3.1 PRO</span>
                     </div>
                     <p class="text-xs text-[#646464] mt-0.5">수원 장애인복지관 교육 이수 통합 관리 플랫폼</p>
                 </div>
             </div>
             
-            <!-- Navigation Pills -->
-            <nav class="flex bg-[#e9ebf0] p-1.5 btn-pill text-sm font-bold">
-                <button id="nav-submit" onclick="switchTab('submit')" class="px-6 py-2 btn-pill bg-[#202020] text-white shadow-sm transition">
-                    수료증 제출
+            <div id="header-action-area" class="flex items-center gap-3">
+                <button onclick="goToSubmitView()" id="header-home-btn" class="hidden px-5 py-2.5 text-xs font-bold bg-[#202020] text-white btn-pill shadow-sm transition">
+                    ← 제출 화면으로
                 </button>
-                <button id="nav-admin" onclick="switchTab('admin')" class="px-6 py-2 btn-pill text-[#646464] hover:text-[#202020] transition">
-                    관리자 목록
-                </button>
-                <button id="nav-settings" onclick="switchTab('settings')" class="px-6 py-2 btn-pill text-[#646464] hover:text-[#202020] transition">
-                    API 설정
-                </button>
-            </nav>
+            </div>
         </div>
     </header>
 
     <!-- Main Content -->
     <main class="flex-1 max-w-[1200px] w-full mx-auto px-6 py-10">
 
-        <!-- 1️⃣ 수료증 제출 탭 -->
-        <section id="tab-submit" class="max-w-2xl mx-auto">
+        <!-- 1️⃣ 수료증 제출 뷰 (활동지원사용) -->
+        <section id="view-submit" class="max-w-2xl mx-auto">
             <div class="bg-white p-10 rounded-[20px] border border-[#e8e8e8] card-shadow">
                 <div class="mb-8">
                     <div class="inline-flex items-center gap-1.5 bg-[#f8f9fa] border border-[#e8e8e8] text-[#6647f0] text-xs font-bold px-3 py-1 btn-pill mb-3">
@@ -114,103 +107,354 @@
             </div>
         </section>
 
-        <!-- 2️⃣ 관리자 창 탭 -->
-        <section id="tab-admin" class="hidden space-y-6">
-            <!-- 요약 컨트롤 바 -->
-            <div class="flex flex-col md:flex-row items-start md:items-center justify-between bg-white p-6 rounded-[16px] border border-[#e8e8e8] card-shadow gap-4">
-                <div>
-                    <div class="flex items-center gap-2">
-                        <h2 class="text-xl font-extrabold text-[#090c1d]">제출 명단 및 누적 이수 현황</h2>
-                        <span id="total-count-badge" class="bg-[#f8f9fa] text-[#202020] text-xs font-mono font-bold px-2.5 py-1 btn-pill border border-[#e8e8e8]">총 0건</span>
-                    </div>
-                    <p class="text-xs text-[#646464] mt-1">170명 활동지원사 수료 내역 확인 및 Gemini AI 자동 검토</p>
-                </div>
-                <div class="flex items-center gap-3">
-                    <button onclick="fetchCertificates()" class="px-4 py-2.5 text-xs font-bold text-[#202020] border border-[#e8e8e8] btn-pill hover:bg-[#f8f9fa] transition flex items-center gap-1.5">
-                        🔄 목록 새로고침
+        <!-- 2️⃣ 관리자 대시보드 뷰 -->
+        <section id="view-admin" class="hidden space-y-6">
+            <!-- 서브 탭 (최고 관리자 전용 메뉴 포함) -->
+            <div class="flex items-center justify-between bg-white p-4 rounded-[16px] border border-[#e8e8e8] card-shadow">
+                <div class="flex items-center gap-2">
+                    <button onclick="switchAdminSubTab('certs')" id="subtab-certs-btn" class="px-5 py-2 text-xs font-bold bg-[#202020] text-white btn-pill transition">
+                        📋 수료증 제출 명단
                     </button>
-                    <button onclick="exportToExcel()" class="px-5 py-2.5 text-xs font-bold bg-[#00c07a] hover:bg-[#00a86b] text-white btn-pill transition shadow-sm flex items-center gap-1.5">
-                        📊 엑셀 다운로드 (.xlsx)
+                    <button id="subtab-members-btn" onclick="switchAdminSubTab('members')" class="hidden px-5 py-2 text-xs font-bold text-[#646464] hover:text-[#202020] btn-pill transition">
+                        👑 관리자 회원 관리 (admin 전용)
                     </button>
                 </div>
+                <div class="text-xs text-[#646464] font-mono" id="logged-in-user-label">접속 계정: 관리자</div>
             </div>
 
-            <!-- 수료증 목록 테이블 -->
-            <div class="bg-white rounded-[16px] border border-[#e8e8e8] overflow-hidden card-shadow">
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse text-sm">
-                        <thead class="bg-[#f8f9fa] border-b border-[#e8e8e8] text-[#838383] font-mono text-[11px] uppercase tracking-wider">
-                            <tr>
-                                <th class="py-4 px-5">성명</th>
-                                <th class="py-4 px-5">생년월일</th>
-                                <th class="py-4 px-5">교육 강좌명</th>
-                                <th class="py-4 px-5">이수 시간</th>
-                                <th class="py-4 px-5">제출 일자</th>
-                                <th class="py-4 px-5">원본 문서</th>
-                                <th class="py-4 px-5 text-right">AI 판독 및 관리</th>
-                            </tr>
-                        </thead>
-                        <tbody id="cert-table-body" class="divide-y divide-[#e8e8e8]">
-                            <!-- 동적 데이터 삽입 -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </section>
-
-        <!-- 3️⃣ API 설정 탭 -->
-        <section id="tab-settings" class="hidden max-w-xl mx-auto">
-            <div class="bg-white p-10 rounded-[20px] border border-[#e8e8e8] card-shadow">
-                <span class="bg-[#f8f9fa] border border-[#e8e8e8] text-[#6647f0] text-xs font-mono font-bold px-3 py-1 btn-pill mb-3 inline-block">SETTINGS</span>
-                <h2 class="text-2xl font-extrabold text-[#090c1d] mb-2">Gemini API 키 설정</h2>
-                <p class="text-xs text-[#646464] leading-relaxed mb-6">수료증 이미지를 분석하기 위한 담당 관리자 개인의 Google Gemini API 키를 등록합니다. 키는 본인 브라우저에만 암호화되어 로컬 저장됩니다.</p>
-
-                <div class="space-y-5">
+            <!-- 하위 탭 1: 수료증 명단 및 분석 패널 -->
+            <div id="subview-certs" class="space-y-6">
+                <!-- 요약 컨트롤 바 -->
+                <div class="flex flex-col md:flex-row items-start md:items-center justify-between bg-white p-6 rounded-[16px] border border-[#e8e8e8] card-shadow gap-4">
                     <div>
-                        <label class="block text-xs font-bold text-[#202020] uppercase tracking-wider mb-2 font-mono">Google Gemini API Key</label>
-                        <input type="password" id="input-api-key" placeholder="AIzaSy..." class="w-full px-4 py-3.5 rounded-[9px] border border-[#d4d4d4] text-sm focus:border-[#6647f0] focus:outline-none transition">
+                        <div class="flex items-center gap-2">
+                            <h2 class="text-xl font-extrabold text-[#090c1d]">제출 명단 및 누적 이수 현황</h2>
+                            <span id="total-count-badge" class="bg-[#f8f9fa] text-[#202020] text-xs font-mono font-bold px-2.5 py-1 btn-pill border border-[#e8e8e8]">총 0건</span>
+                        </div>
+                        <p class="text-xs text-[#646464] mt-1">활동지원사 수료 내역 확인 및 Gemini AI 자동 검토</p>
                     </div>
-                    <button onclick="saveApiKey()" class="w-full bg-[#6647f0] hover:bg-[#5232e0] text-white font-bold py-3.5 btn-pill transition shadow-sm">
-                        API 키 저장 완료
+                    <div class="flex items-center gap-3">
+                        <button onclick="openApiKeyModal()" class="px-4 py-2.5 text-xs font-bold bg-purple-50 text-[#6647f0] border border-purple-200 btn-pill hover:bg-purple-100 transition flex items-center gap-1.5">
+                            🔑 API 키 변경/등록
+                        </button>
+                        <button onclick="fetchCertificates()" class="px-4 py-2.5 text-xs font-bold text-[#202020] border border-[#e8e8e8] btn-pill hover:bg-[#f8f9fa] transition flex items-center gap-1.5">
+                            🔄 새로고침
+                        </button>
+                        <button onclick="exportToExcel()" class="px-5 py-2.5 text-xs font-bold bg-[#00c07a] hover:bg-[#00a86b] text-white btn-pill transition shadow-sm flex items-center gap-1.5">
+                            📊 엑셀 다운로드 (.xlsx)
+                        </button>
+                    </div>
+                </div>
+
+                <!-- API 키 활성도 상태 확인 패널 -->
+                <div class="bg-white p-6 rounded-[16px] border border-[#e8e8e8] card-shadow">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="text-xs font-bold uppercase tracking-wider text-[#838383] font-mono">내 API 키 활성도 상태</h3>
+                        <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-xs text-[#0091ff] hover:underline font-bold font-mono">🔗 Google AI Studio에서 API 키 발급받기 ↗</a>
+                    </div>
+                    <div id="api-status-container" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <!-- 동적 렌더링 -->
+                    </div>
+                </div>
+
+                <!-- 수료증 제출 목록 테이블 -->
+                <div class="bg-white rounded-[16px] border border-[#e8e8e8] overflow-hidden card-shadow">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse text-sm">
+                            <thead class="bg-[#f8f9fa] border-b border-[#e8e8e8] text-[#838383] font-mono text-[11px] uppercase tracking-wider">
+                                <tr>
+                                    <th class="py-4 px-5">성명</th>
+                                    <th class="py-4 px-5">생년월일</th>
+                                    <th class="py-4 px-5">교육 강좌명</th>
+                                    <th class="py-4 px-5">이수 시간</th>
+                                    <th class="py-4 px-5">제출 일자</th>
+                                    <th class="py-4 px-5">원본 문서</th>
+                                    <th class="py-4 px-5 text-right">AI 판독 및 관리</th>
+                                </tr>
+                            </thead>
+                            <tbody id="cert-table-body" class="divide-y divide-[#e8e8e8]">
+                                <!-- 동적 데이터 삽입 -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 하위 탭 2: 최고 관리자 전용 회원(관리자) 관리 창 -->
+            <div id="subview-members" class="hidden space-y-6">
+                <div class="flex items-center justify-between bg-white p-6 rounded-[16px] border border-[#e8e8e8] card-shadow">
+                    <div>
+                        <h2 class="text-xl font-extrabold text-[#090c1d]">관리자 회원 계정 관리</h2>
+                        <p class="text-xs text-[#646464] mt-1">최고 관리자(admin) 전용: 등록된 관리자 목록을 조회하고 관리합니다.</p>
+                    </div>
+                    <button onclick="openApiKeyModal()" class="px-4 py-2.5 text-xs font-bold bg-[#6647f0] text-white btn-pill transition shadow-sm">
+                        + 신규 관리자 등록
                     </button>
+                </div>
+
+                <div class="bg-white rounded-[16px] border border-[#e8e8e8] overflow-hidden card-shadow">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse text-sm">
+                            <thead class="bg-[#f8f9fa] border-b border-[#e8e8e8] text-[#838383] font-mono text-[11px] uppercase tracking-wider">
+                                <tr>
+                                    <th class="py-4 px-5">관리자 이름</th>
+                                    <th class="py-4 px-5">아이디 (ID)</th>
+                                    <th class="py-4 px-5">API 키 등록 상태</th>
+                                    <th class="py-4 px-5 text-right">관리</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-members-tbody" class="divide-y divide-[#e8e8e8]">
+                                <!-- 동적 렌더링 -->
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </section>
 
     </main>
 
+    <!-- Footer with subtle Admin Login Link -->
+    <footer class="max-w-[1200px] w-full mx-auto px-6 py-6 border-t border-[#e8e8e8] flex items-center justify-between text-xs text-[#838383]">
+        <p>© 2026 Suwon Welfare Center. All rights reserved.</p>
+        <button onclick="openLoginModal()" class="hover:text-[#202020] underline transition font-mono">관리자</button>
+    </footer>
+
+    <!-- 🔐 관리자 로그인 모달 -->
+    <div id="login-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center z-50">
+        <div class="bg-white p-8 rounded-[20px] max-w-sm w-full card-shadow mx-4">
+            <h3 class="text-xl font-extrabold text-[#090c1d] mb-1">관리자 로그인</h3>
+            <p class="text-xs text-[#646464] mb-6">계정이 없다면 아래에서 신규 등록을 진행하세요.</p>
+            <form onsubmit="handleAdminLogin(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-[#202020] uppercase tracking-wider mb-1 font-mono">아이디 (ID)</label>
+                    <input type="text" id="login-id" required placeholder="admin" class="w-full px-4 py-3 rounded-[9px] border border-[#d4d4d4] text-sm focus:border-[#6647f0] focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-[#202020] uppercase tracking-wider mb-1 font-mono">비밀번호 (Password)</label>
+                    <input type="password" id="login-pw" required placeholder="••••" class="w-full px-4 py-3 rounded-[9px] border border-[#d4d4d4] text-sm focus:border-[#6647f0] focus:outline-none">
+                </div>
+                <div class="flex gap-2 pt-2">
+                    <button type="button" onclick="closeLoginModal()" class="flex-1 py-3 border border-[#e8e8e8] text-xs font-bold rounded-full hover:bg-gray-50 transition">취소</button>
+                    <button type="submit" class="flex-1 py-3 bg-[#202020] text-white text-xs font-bold rounded-full hover:bg-black transition">로그인</button>
+                </div>
+                <div class="text-center pt-2">
+                    <button type="button" onclick="closeLoginModal(); openApiKeyModal();" class="text-xs text-[#6647f0] hover:underline font-bold">처음이신가요? 신규 관리자/API 등록하기</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 🔑 신규 관리자 및 API 키 등록 모달 (가이드 포함) -->
+    <div id="apikey-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center z-50">
+        <div class="bg-white p-8 rounded-[20px] max-w-md w-full card-shadow mx-4">
+            <h3 class="text-xl font-extrabold text-[#090c1d] mb-1">관리자 및 API 키 등록</h3>
+            <p class="text-xs text-[#646464] mb-4">구글 계정으로 Gemini API 키를 무료로 발급받아 입력해 주세요.</p>
+            
+            <!-- API 키 발급 가이드 박스 -->
+            <div class="mb-5 p-3.5 bg-purple-50 rounded-[12px] border border-purple-100 text-xs space-y-1.5">
+                <p class="font-bold text-[#6647f0]">💡 API 키 발급 방법</p>
+                <p class="text-[#646464]">1. 아래 링크를 눌러 구글 AI Studio에 로그인합니다.</p>
+                <p class="text-[#646464]">2. <strong>'Create API key'</strong>를 눌러 키를 생성하고 복사합니다.</p>
+                <a href="https://aistudio.google.com/app/apikey" target="_blank" class="inline-block font-bold text-[#0091ff] hover:underline pt-1">🔗 Google AI Studio 바로가기 (API 키 발급) ↗</a>
+            </div>
+
+            <form onsubmit="handleSaveApiKey(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-[#202020] uppercase tracking-wider mb-1 font-mono">관리자 이름</label>
+                    <input type="text" id="reg-name" required placeholder="예: 김복지" class="w-full px-4 py-3 rounded-[9px] border border-[#d4d4d4] text-sm focus:border-[#6647f0] focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-[#202020] uppercase tracking-wider mb-1 font-mono">사용할 아이디 (ID)</label>
+                    <input type="text" id="reg-id" required placeholder="예: welfare01" class="w-full px-4 py-3 rounded-[9px] border border-[#d4d4d4] text-sm focus:border-[#6647f0] focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-[#202020] uppercase tracking-wider mb-1 font-mono">비밀번호</label>
+                    <input type="password" id="reg-pw" required placeholder="비밀번호 설정" class="w-full px-4 py-3 rounded-[9px] border border-[#d4d4d4] text-sm focus:border-[#6647f0] focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-[#202020] uppercase tracking-wider mb-1 font-mono">Google Gemini API Key</label>
+                    <input type="password" id="reg-apikey" required placeholder="AIzaSy..." class="w-full px-4 py-3 rounded-[9px] border border-[#d4d4d4] text-sm focus:border-[#6647f0] focus:outline-none">
+                </div>
+                <div class="flex gap-2 pt-2">
+                    <button type="button" onclick="closeApiKeyModal()" class="flex-1 py-3 border border-[#e8e8e8] text-xs font-bold rounded-full hover:bg-gray-50 transition">취소</button>
+                    <button type="submit" class="flex-1 py-3 bg-[#6647f0] text-white text-xs font-bold rounded-full hover:bg-violet-700 transition">등록 및 기억하기</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- 스크립트 영역 -->
     <script>
-        // ==========================================
-        // 🛠️ 제공해주신 Supabase URL 및 키 내장 완료
-        // ==========================================
         const SUPABASE_URL = 'https://hnwwgjdjrxkgguudockp.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_0GGJULV8jinRZR2J_JH5gw_9A-zsqtE';
 
         let supabaseClient = null;
+        let currentLoggedInAdmin = null;
 
-        // 안전한 Supabase 클라이언트 초기화 함수
         function initSupabase() {
             if (window.supabase && typeof window.supabase.createClient === 'function') {
                 supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
             } else {
-                setTimeout(initSupabase, 200); // 라이브러리가 아직 로드 안 되었으면 재시도
+                setTimeout(initSupabase, 200);
             }
         }
 
-        window.addEventListener('DOMContentLoaded', initSupabase);
+        window.addEventListener('DOMContentLoaded', () => {
+            initSupabase();
+            let admins = JSON.parse(localStorage.getItem('admin_accounts') || '[]');
+            if (!admins.some(a => a.id === 'admin')) {
+                admins.push({ id: 'admin', name: '최고관리자(Admin)', pw: '1130', apiKey: '' });
+                localStorage.setItem('admin_accounts', JSON.stringify(admins));
+            }
+        });
 
-        // 탭 전환
-        function switchTab(tab) {
-            ['submit', 'admin', 'settings'].forEach(t => {
-                document.getElementById(`tab-${t}`).classList.add('hidden');
-                document.getElementById(`nav-${t}`).className = "px-6 py-2 btn-pill text-[#646464] hover:text-[#202020] transition";
-            });
-            document.getElementById(`tab-${tab}`).classList.remove('hidden');
-            document.getElementById(`nav-${tab}`).className = "px-6 py-2 btn-pill bg-[#202020] text-white shadow-sm font-bold transition";
+        function goToSubmitView() {
+            document.getElementById('view-submit').classList.remove('hidden');
+            document.getElementById('view-admin').classList.add('hidden');
+            document.getElementById('header-home-btn').classList.add('hidden');
+        }
 
-            if (tab === 'admin') fetchCertificates();
-            if (tab === 'settings') loadApiKey();
+        function goToAdminView(adminObj) {
+            currentLoggedInAdmin = adminObj;
+            document.getElementById('view-submit').classList.add('hidden');
+            document.getElementById('view-admin').classList.remove('hidden');
+            document.getElementById('header-home-btn').classList.remove('hidden');
+            
+            document.getElementById('logged-in-user-label').innerText = `접속 계정: ${adminObj.name} (${adminObj.id})`;
+
+            if (adminObj.id === 'admin') {
+                document.getElementById('subtab-members-btn').classList.remove('hidden');
+            } else {
+                document.getElementById('subtab-members-btn').classList.add('hidden');
+            }
+
+            switchAdminSubTab('certs');
+            fetchCertificates();
+            renderApiStatus();
+        }
+
+        function switchAdminSubTab(tab) {
+            if (tab === 'certs') {
+                document.getElementById('subview-certs').classList.remove('hidden');
+                document.getElementById('subview-members').classList.add('hidden');
+                document.getElementById('subtab-certs-btn').className = "px-5 py-2 text-xs font-bold bg-[#202020] text-white btn-pill transition";
+                document.getElementById('subtab-members-btn').className = "px-5 py-2 text-xs font-bold text-[#646464] hover:text-[#202020] btn-pill transition";
+            } else {
+                document.getElementById('subview-certs').classList.add('hidden');
+                document.getElementById('subview-members').classList.remove('hidden');
+                document.getElementById('subtab-members-btn').className = "px-5 py-2 text-xs font-bold bg-[#202020] text-white btn-pill transition";
+                document.getElementById('subtab-certs-btn').className = "px-5 py-2 text-xs font-bold text-[#646464] hover:text-[#202020] btn-pill transition";
+                renderAdminMembersList();
+            }
+        }
+
+        function openLoginModal() { document.getElementById('login-modal').classList.remove('hidden'); document.getElementById('login-modal').classList.add('flex'); }
+        function closeLoginModal() { document.getElementById('login-modal').classList.add('hidden'); document.getElementById('login-modal').classList.remove('flex'); }
+        
+        function openApiKeyModal() { document.getElementById('apikey-modal').classList.remove('hidden'); document.getElementById('apikey-modal').classList.add('flex'); }
+        function closeApiKeyModal() { document.getElementById('apikey-modal').classList.add('hidden'); document.getElementById('apikey-modal').classList.remove('flex'); }
+
+        function handleAdminLogin(e) {
+            e.preventDefault();
+            const id = document.getElementById('login-id').value.trim();
+            const pw = document.getElementById('login-pw').value.trim();
+
+            let admins = JSON.parse(localStorage.getItem('admin_accounts') || '[]');
+            const found = admins.find(a => a.id === id && a.pw === pw);
+
+            if (found) {
+                closeLoginModal();
+                document.getElementById('login-id').value = '';
+                document.getElementById('login-pw').value = '';
+                alert(`환영합니다, ${found.name}님!`);
+                goToAdminView(found);
+            } else {
+                alert('아이디 또는 비밀번호가 일치하지 않습니다.');
+            }
+        }
+
+        function handleSaveApiKey(e) {
+            e.preventDefault();
+            const name = document.getElementById('reg-name').value.trim();
+            const id = document.getElementById('reg-id').value.trim();
+            const pw = document.getElementById('reg-pw').value.trim();
+            const apiKey = document.getElementById('reg-apikey').value.trim();
+
+            let admins = JSON.parse(localStorage.getItem('admin_accounts') || '[]');
+            
+            const existingIndex = admins.findIndex(a => a.id === id);
+            if (existingIndex >= 0) {
+                admins[existingIndex] = { id, name, pw, apiKey };
+            } else {
+                admins.push({ id, name, pw, apiKey });
+            }
+
+            localStorage.setItem('admin_accounts', JSON.stringify(admins));
+
+            closeApiKeyModal();
+            document.getElementById('reg-name').value = '';
+            document.getElementById('reg-id').value = '';
+            document.getElementById('reg-pw').value = '';
+            document.getElementById('reg-apikey').value = '';
+            
+            alert('관리자 계정 및 API 키가 안전하게 등록 및 기억되었습니다!');
+
+            const savedAdmin = admins.find(a => a.id === id);
+            goToAdminView(savedAdmin);
+        }
+
+        function renderApiStatus() {
+            const container = document.getElementById('api-status-container');
+            if (!currentLoggedInAdmin) return;
+
+            let admins = JSON.parse(localStorage.getItem('admin_accounts') || '[]');
+            const me = admins.find(a => a.id === currentLoggedInAdmin.id) || currentLoggedInAdmin;
+            const hasKey = me.apiKey && me.apiKey.trim().length > 5;
+
+            container.innerHTML = `
+                <div class="p-4 rounded-[12px] border border-[#e8e8e8] bg-[#f8f9fa] flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-bold text-[#090c1d]">${me.name} (${me.id})</p>
+                        <p class="text-[10px] text-[#838383] font-mono mt-0.5">상태: ${hasKey ? '정상 등록됨' : '키 미등록 상태'}</p>
+                    </div>
+                    <span class="px-3 py-1 text-xs font-bold font-mono btn-pill ${hasKey ? 'bg-emerald-50 text-[#00c07a] border border-emerald-200' : 'bg-red-50 text-red-500 border border-red-200'}">
+                        ${hasKey ? '● API 활성화됨' : '○ 비활성화'}
+                    </span>
+                </div>
+            `;
+        }
+
+        function renderAdminMembersList() {
+            const tbody = document.getElementById('admin-members-tbody');
+            let admins = JSON.parse(localStorage.getItem('admin_accounts') || '[]');
+
+            tbody.innerHTML = admins.map(adm => {
+                const hasKey = adm.apiKey && adm.apiKey.trim().length > 5;
+                return `
+                    <tr class="hover:bg-[#f8f9fa] transition">
+                        <td class="py-4 px-5 font-bold text-[#090c1d]">${adm.name}</td>
+                        <td class="py-4 px-5 font-mono text-xs text-[#646464]">${adm.id}</td>
+                        <td class="py-4 px-5">
+                            <span class="px-2.5 py-1 text-[10px] font-bold font-mono btn-pill ${hasKey ? 'bg-emerald-50 text-[#00c07a]' : 'bg-gray-100 text-gray-400'}">
+                                ${hasKey ? '활성 (키 있음)' : '미등록'}
+                            </span>
+                        </td>
+                        <td class="py-4 px-5 text-right">
+                            ${adm.id !== 'admin' ? `<button onclick="deleteAdmin('${adm.id}')" class="px-3 py-1 text-xs font-bold bg-red-50 text-red-600 hover:bg-red-100 btn-pill transition">계정 삭제</button>` : '<span class="text-xs text-gray-400 font-mono">최고관리자</span>'}
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function deleteAdmin(id) {
+            if (confirm('해당 관리자 계정을 삭제하시겠습니까?')) {
+                let admins = JSON.parse(localStorage.getItem('admin_accounts') || '[]');
+                admins = admins.filter(a => a.id !== id);
+                localStorage.setItem('admin_accounts', JSON.stringify(admins));
+                renderAdminMembersList();
+            }
         }
 
         function displayFileName(input) {
@@ -219,11 +463,10 @@
             }
         }
 
-        // 1. 수료증 제출
         async function handleCertificateUpload(e) {
             e.preventDefault();
             if (!supabaseClient) {
-                alert("Supabase 시스템에 연결 중입니다. 1~2초 후 다시 [수료증 제출 완료]를 눌러주세요.");
+                alert("Supabase 시스템 초기화 중입니다. 잠시 후 다시 시도해 주세요.");
                 initSupabase();
                 return;
             }
@@ -240,13 +483,11 @@
                 const fileExt = file.name.split('.').pop();
                 const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
 
-                // Supabase Storage 업로드
                 const { data: fileData, error: fileError } = await supabaseClient.storage.from('certificates').upload(fileName, file);
                 if (fileError) throw fileError;
 
                 const { data: urlData } = supabaseClient.storage.from('certificates').getPublicUrl(fileName);
 
-                // Supabase DB 저장
                 const { error: dbError } = await supabaseClient.from('certificates').insert([{
                     assistant_name: name,
                     birth_date: birth,
@@ -270,7 +511,6 @@
             }
         }
 
-        // 2. 제출 목록 로드
         async function fetchCertificates() {
             if (!supabaseClient) return;
 
@@ -310,12 +550,29 @@
             `).join('');
         }
 
-        // 3. AI 수료증 자동 분석
         async function analyzeWithAI(id, imageUrl) {
-            const apiKey = localStorage.getItem('gemini_api_key');
-            if (!apiKey) {
-                alert('Gemini API 키가 입력되어 있지 않습니다. [API 설정] 탭에서 등록해 주세요.');
-                switchTab('settings');
+            let admins = JSON.parse(localStorage.getItem('admin_accounts') || '[]');
+            let activeApiKey = '';
+
+            if (currentLoggedInAdmin) {
+                const me = admins.find(a => a.id === currentLoggedInAdmin.id);
+                if (me && me.apiKey && me.apiKey.trim().length > 5) {
+                    activeApiKey = me.apiKey.trim();
+                }
+            }
+
+            if (!activeApiKey) {
+                for (let adm of admins) {
+                    if (adm.apiKey && adm.apiKey.trim().length > 5) {
+                        activeApiKey = adm.apiKey.trim();
+                        break;
+                    }
+                }
+            }
+
+            if (!activeApiKey) {
+                alert('API 키가 활성화되어 있지 않습니다. API 키를 다시 입력해 주세요.');
+                openApiKeyModal();
                 return;
             }
 
@@ -336,7 +593,7 @@
 
 응답 예시: {"courseName": "노인일자리 사례로 배우는 안전사고 예방교육", "trainingHours": 6}`;
 
-                const apiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+                const apiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${activeApiKey}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -351,6 +608,10 @@
                 });
 
                 const result = await apiRes.json();
+                if (result.error) {
+                    throw new Error(result.error.message || 'API 키 인증 오류');
+                }
+
                 const parsed = JSON.parse(result.candidates[0].content.parts[0].text);
 
                 await supabaseClient.from('certificates').update({
@@ -367,20 +628,6 @@
             }
         }
 
-        // 4. API 키 설정 로직
-        function saveApiKey() {
-            const key = document.getElementById('input-api-key').value.trim();
-            if (key) {
-                localStorage.setItem('gemini_api_key', key);
-                alert('Gemini API 키가 저장되었습니다.');
-            }
-        }
-
-        function loadApiKey() {
-            document.getElementById('input-api-key').value = localStorage.getItem('gemini_api_key') || '';
-        }
-
-        // 5. Excel 다운로드
         async function exportToExcel() {
             if (!supabaseClient) return;
 

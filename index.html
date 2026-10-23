@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>활동지원사 교육수료증 관리 및 AI 분석 시스템</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Supabase JS Client CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <!-- SheetJS (Excel 내보내기용 CDN) -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=Sometype+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --font-display: 'Plus Jakarta Sans', sans-serif;
+            --font-body: 'Inter', sans-serif;
+            --font-mono: 'Sometype Mono', monospace;
+        }
+        body {
+            font-family: var(--font-body);
+            background-color: #f8f9fa;
+            color: #202020;
+        }
+        h1, h2, h3, .font-display {
+            font-family: var(--font-display);
+            letter-spacing: -0.03em;
+        }
+        .btn-pill {
+            border-radius: 9999px;
+        }
+        .card-shadow {
+            box-shadow: rgba(0, 0, 0, 0.04) 0px 4px 12px 0px;
+        }
+        .conic-border {
+            position: relative;
+            border-radius: 9999px;
+            padding: 2px;
+            background: conic-gradient(from 90deg, #7d5be7, #bc3fda, #fa24ce, #fb49a5, #fd8461, #4fb9fa, #0091ff, #7d5be7);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col antialiased">
+
+    <!-- Header / Navbar -->
+    <header class="bg-white border-b border-[#e8e8e8] sticky top-0 z-50">
+        <div class="max-w-[1200px] mx-auto px-6 h-20 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-[#202020] text-white rounded-full flex items-center justify-center font-extrabold text-xl font-display">
+                    위
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h1 class="text-xl font-extrabold text-[#090c1d]">활동지원사 수료증 센터</h1>
+                        <span class="bg-[#f8f9fa] border border-[#e8e8e8] text-[#6647f0] text-[10px] font-mono font-bold px-2 py-0.5 btn-pill uppercase tracking-wider">v2.0 PRO</span>
+                    </div>
+                    <p class="text-xs text-[#646464] mt-0.5">수원 장애인복지관 교육 이수 통합 관리 플랫폼</p>
+                </div>
+            </div>
+            
+            <!-- Navigation Pills -->
+            <nav class="flex bg-[#e9ebf0] p-1.5 btn-pill text-sm font-bold">
+                <button id="nav-submit" onclick="switchTab('submit')" class="px-6 py-2 btn-pill bg-[#202020] text-white shadow-sm transition">
+                    수료증 제출
+                </button>
+                <button id="nav-admin" onclick="switchTab('admin')" class="px-6 py-2 btn-pill text-[#646464] hover:text-[#202020] transition">
+                    관리자 목록
+                </button>
+                <button id="nav-settings" onclick="switchTab('settings')" class="px-6 py-2 btn-pill text-[#646464] hover:text-[#202020] transition">
+                    API 설정
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 max-w-[1200px] w-full mx-auto px-6 py-10">
+
+        <!-- 1️⃣ 수료증 제출 탭 -->
+        <section id="tab-submit" class="max-w-2xl mx-auto">
+            <div class="bg-white p-10 rounded-[20px] border border-[#e8e8e8] card-shadow">
+                <div class="mb-8">
+                    <div class="inline-flex items-center gap-1.5 bg-[#f8f9fa] border border-[#e8e8e8] text-[#6647f0] text-xs font-bold px-3 py-1 btn-pill mb-3">
+                        <span class="w-1.5 h-1.5 rounded-full bg-[#6647f0]"></span>
+                        활동지원사 간편 수료증 제출
+                    </div>
+                    <h2 class="text-3xl font-extrabold text-[#090c1d]">교육 수료증 제출하기</h2>
+                    <p class="text-sm text-[#646464] mt-2">이수하신 교육 수료증 이미지(JPG, PNG) 또는 PDF 파일을 업로드해 주세요.</p>
+                </div>
+
+                <form id="upload-form" onsubmit="handleCertificateUpload(event)" class="space-y-6">
+                    <div>
+                        <label class="block text-xs font-bold text-[#202020] uppercase tracking-wider mb-2 font-mono">01. 성명 (활동지원사)</label>
+                        <input type="text" id="input-name" required placeholder="예: 홍길동" class="w-full px-4 py-3.5 rounded-[9px] border border-[#d4d4d4] text-sm focus:border-[#0091ff] focus:outline-none transition">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-[#202020] uppercase tracking-wider mb-2 font-mono">02. 생년월일 (6자리)</label>
+                        <input type="text" id="input-birth" required maxlength="6" placeholder="예: 700101" class="w-full px-4 py-3.5 rounded-[9px] border border-[#d4d4d4] text-sm focus:border-[#0091ff] focus:outline-none transition">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-[#202020] uppercase tracking-wider mb-2 font-mono">03. 수료증 파일 첨부</label>
+                        <div class="border-2 border-dashed border-[#d4d4d4] rounded-[16px] p-8 text-center hover:border-[#0091ff] hover:bg-[#f8f9fa] transition cursor-pointer relative" onclick="document.getElementById('input-file').click()">
+                            <div class="w-12 h-12 bg-[#f8f9fa] rounded-full flex items-center justify-center mx-auto mb-3 border border-[#e8e8e8]">
+                                <svg class="w-6 h-6 text-[#646464]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                            </div>
+                            <p class="text-sm font-bold text-[#202020]"><span class="text-[#0091ff]">파일 선택</span> 또는 드래그 앤 드롭</p>
+                            <p class="text-xs text-[#838383] mt-1 font-mono">JPG, PNG, PDF (최대 10MB)</p>
+                            <p id="file-name-display" class="text-xs font-bold text-[#6647f0] mt-3 font-mono"></p>
+                            <input type="file" id="input-file" accept="image/*,application/pdf" required class="hidden" onchange="displayFileName(this)">
+                        </div>
+                    </div>
+
+                    <button type="submit" id="btn-submit" class="w-full bg-[#202020] hover:bg-[#090c1d] text-white font-bold py-4 btn-pill transition text-center shadow-md">
+                        수료증 제출 완료
+                    </button>
+                </form>
+            </div>
+        </section>
+
+        <!-- 2️⃣ 관리자 창 탭 -->
+        <section id="tab-admin" class="hidden space-y-6">
+            <!-- 요약 컨트롤 바 -->
+            <div class="flex flex-col md:flex-row items-start md:items-center justify-between bg-white p-6 rounded-[16px] border border-[#e8e8e8] card-shadow gap-4">
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h2 class="text-xl font-extrabold text-[#090c1d]">제출 명단 및 누적 이수 현황</h2>
+                        <span id="total-count-badge" class="bg-[#f8f9fa] text-[#202020] text-xs font-mono font-bold px-2.5 py-1 btn-pill border border-[#e8e8e8]">총 0건</span>
+                    </div>
+                    <p class="text-xs text-[#646464] mt-1">170명 활동지원사 수료 내역 확인 및 Gemini AI 자동 검토</p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <button onclick="fetchCertificates()" class="px-4 py-2.5 text-xs font-bold text-[#202020] border border-[#e8e8e8] btn-pill hover:bg-[#f8f9fa] transition flex items-center gap-1.5">
+                        🔄 목록 새로고침
+                    </button>
+                    <button onclick="exportToExcel()" class="px-5 py-2.5 text-xs font-bold bg-[#00c07a] hover:bg-[#00a86b] text-white btn-pill transition shadow-sm flex items-center gap-1.5">
+                        📊 엑셀 다운로드 (.xlsx)
+                    </button>
+                </div>
+            </div>
+
+            <!-- 수료증 목록 테이블 -->
+            <div class="bg-white rounded-[16px] border border-[#e8e8e8] overflow-hidden card-shadow">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-sm">
+                        <thead class="bg-[#f8f9fa] border-b border-[#e8e8e8] text-[#838383] font-mono text-[11px] uppercase tracking-wider">
+                            <tr>
+                                <th class="py-4 px-5">성명</th>
+                                <th class="py-4 px-5">생년월일</th>
+                                <th class="py-4 px-5">교육 강좌명</th>
+                                <th class="py-4 px-5">이수 시간</th>
+                                <th class="py-4 px-5">제출 일자</th>
+                                <th class="py-4 px-5">원본 문서</th>
+                                <th class="py-4 px-5 text-right">AI 판독 및 관리</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cert-table-body" class="divide-y divide-[#e8e8e8]">
+                            <!-- 동적 데이터 삽입 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3️⃣ API 설정 탭 -->
+        <section id="tab-settings" class="hidden max-w-xl mx-auto">
+            <div class="bg-white p-10 rounded-[20px] border border-[#e8e8e8] card-shadow">
+                <span class="bg-[#f8f9fa] border border-[#e8e8e8] text-[#6647f0] text-xs font-mono font-bold px-3 py-1 btn-pill mb-3 inline-block">SETTINGS</span>
+                <h2 class="text-2xl font-extrabold text-[#090c1d] mb-2">Gemini API 키 설정</h2>
+                <p class="text-xs text-[#646464] leading-relaxed mb-6">수료증 이미지를 분석하기 위한 담당 관리자 개인의 Google Gemini API 키를 등록합니다. 키는 본인 브라우저에만 암호화되어 로컬 저장됩니다.</p>
+
+                <div class="space-y-5">
+                    <div>
+                        <label class="block text-xs font-bold text-[#202020] uppercase tracking-wider mb-2 font-mono">Google Gemini API Key</label>
+                        <input type="password" id="input-api-key" placeholder="AIzaSy..." class="w-full px-4 py-3.5 rounded-[9px] border border-[#d4d4d4] text-sm focus:border-[#6647f0] focus:outline-none transition">
+                    </div>
+                    <button onclick="saveApiKey()" class="w-full bg-[#6647f0] hover:bg-[#5232e0] text-white font-bold py-3.5 btn-pill transition shadow-sm">
+                        API 키 저장 완료
+                    </button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- 스크립트 영역 -->
+    <script>
+        // ==========================================
+        // 🛠️ 본인의 Supabase 정보로 교체해 주세요!
+        // ==========================================
+        const SUPABASE_URL = 'https://YOUR_SUPABASE_PROJECT_URL.supabase.co';
+        const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+
+        let supabaseClient = null;
+
+        // 안전한 Supabase 클라이언트 초기화
+        window.addEventListener('DOMContentLoaded', () => {
+            if (window.supabase && typeof window.supabase.createClient === 'function') {
+                supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            } else {
+                console.error("Supabase 라이브러리를 로드하지 못했습니다.");
+            }
+        });
+
+        // 탭 전환
+        function switchTab(tab) {
+            ['submit', 'admin', 'settings'].forEach(t => {
+                document.getElementById(`tab-${t}`).classList.add('hidden');
+                document.getElementById(`nav-${t}`).className = "px-6 py-2 btn-pill text-[#646464] hover:text-[#202020] transition";
+            });
+            document.getElementById(`tab-${tab}`).classList.remove('hidden');
+            document.getElementById(`nav-${tab}`).className = "px-6 py-2 btn-pill bg-[#202020] text-white shadow-sm font-bold transition";
+
+            if (tab === 'admin') fetchCertificates();
+            if (tab === 'settings') loadApiKey();
+        }
+
+        function displayFileName(input) {
+            if (input.files && input.files[0]) {
+                document.getElementById('file-name-display').innerText = `선택된 파일: ${input.files[0].name}`;
+            }
+        }
+
+        // 1. 수료증 제출
+        async function handleCertificateUpload(e) {
+            e.preventDefault();
+            if (!supabaseClient) {
+                alert("Supabase 클라이언트가 초기화되지 않았습니다. SUPABASE_URL과 ANON_KEY를 확인해 주세요.");
+                return;
+            }
+
+            const btn = document.getElementById('btn-submit');
+            btn.disabled = true;
+            btn.innerText = "안전하게 업로드 중...";
+
+            const name = document.getElementById('input-name').value;
+            const birth = document.getElementById('input-birth').value;
+            const file = document.getElementById('input-file').files[0];
+
+            try {
+                const fileExt = file.name.split('.').pop();
+                const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+
+                const { data: fileData, error: fileError } = await supabaseClient.storage.from('certificates').upload(fileName, file);
+                if (fileError) throw fileError;
+
+                const { data: urlData } = supabaseClient.storage.from('certificates').getPublicUrl(fileName);
+
+                const { error: dbError } = await supabaseClient.from('certificates').insert([{
+                    assistant_name: name,
+                    birth_date: birth,
+                    image_url: urlData.publicUrl,
+                    course_name: '분석 대기 중',
+                    training_hours: 0,
+                    status: 'pending'
+                }]);
+
+                if (dbError) throw dbError;
+
+                alert('수료증이 성공적으로 제출되었습니다!');
+                document.getElementById('upload-form').reset();
+                document.getElementById('file-name-display').innerText = '';
+
+            } catch (err) {
+                alert('제출 중 오류가 발생했습니다: ' + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "수료증 제출 완료";
+            }
+        }
+
+        // 2. 제출 목록 로드
+        async function fetchCertificates() {
+            if (!supabaseClient) return;
+
+            const tbody = document.getElementById('cert-table-body');
+            tbody.innerHTML = `<tr><td colspan="7" class="text-center py-8 text-[#838383] font-mono text-xs">데이터를 가져오는 중...</td></tr>`;
+
+            const { data, error } = await supabaseClient.from('certificates').select('*').order('created_at', { ascending: false });
+
+            if (error) {
+                tbody.innerHTML = `<tr><td colspan="7" class="text-center py-8 text-red-500 font-mono text-xs">불러오기 실패: ${error.message}</td></tr>`;
+                return;
+            }
+
+            document.getElementById('total-count-badge').innerText = `총 ${data ? data.length : 0}건`;
+
+            if (!data || data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="text-center py-8 text-[#838383] font-mono text-xs">제출된 수료증 내역이 없습니다.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = data.map(item => `
+                <tr class="hover:bg-[#f8f9fa] transition">
+                    <td class="py-4 px-5 font-bold text-[#090c1d]">${item.assistant_name}</td>
+                    <td class="py-4 px-5 text-[#646464] font-mono text-xs">${item.birth_date}</td>
+                    <td class="py-4 px-5 text-[#202020] font-medium">${item.course_name}</td>
+                    <td class="py-4 px-5"><span class="bg-purple-50 text-[#6647f0] font-bold px-2.5 py-1 btn-pill font-mono text-xs">${item.training_hours}시간</span></td>
+                    <td class="py-4 px-5 text-[#838383] font-mono text-xs">${new Date(item.created_at).toLocaleDateString()}</td>
+                    <td class="py-4 px-5">
+                        <a href="${item.image_url}" target="_blank" class="text-[#0091ff] hover:underline font-bold text-xs font-mono">문서 보기 ↗</a>
+                    </td>
+                    <td class="py-4 px-5 text-right">
+                        <button onclick="analyzeWithAI('${item.id}', '${item.image_url}')" class="px-3.5 py-1.5 text-xs font-bold bg-[#202020] text-white hover:bg-[#090c1d] btn-pill transition shadow-sm">
+                            🤖 AI 분석
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // 3. AI 수료증 자동 분석
+        async function analyzeWithAI(id, imageUrl) {
+            const apiKey = localStorage.getItem('gemini_api_key');
+            if (!apiKey) {
+                alert('Gemini API 키가 입력되어 있지 않습니다. [API 설정] 탭에서 등록해 주세요.');
+                switchTab('settings');
+                return;
+            }
+
+            alert('GSEEK 비전 AI로 수료증을 분석합니다...');
+
+            try {
+                const response = await fetch(imageUrl);
+                const blob = await response.blob();
+                const base64Data = await new Promise(resolve => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => resolve(reader.result.split(',')[1]);
+                    reader.readAsDataURL(blob);
+                });
+
+                const prompt = `이 경기도평생학습포털(GSEEK) 또는 공인 수료증 이미지에서 다음 항목을 정확히 추출하여 JSON 구조체로만 반환하세요:
+1. courseName: 강좌명 원문 (예: 노인일자리 사례로 배우는 안전사고 예방교육)
+2. trainingHours: 학습시간 숫자만 (예: 6시간 이면 6)
+
+응답 예시: {"courseName": "노인일자리 사례로 배우는 안전사고 예방교육", "trainingHours": 6}`;
+
+                const apiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{
+                            parts: [
+                                { text: prompt },
+                                { inline_data: { mime_type: "image/jpeg", data: base64Data } }
+                            ]
+                        }],
+                        generationConfig: { response_mime_type: "application/json" }
+                    })
+                });
+
+                const result = await apiRes.json();
+                const parsed = JSON.parse(result.candidates[0].content.parts[0].text);
+
+                await supabaseClient.from('certificates').update({
+                    course_name: parsed.courseName || '확인 필요',
+                    training_hours: parseInt(parsed.trainingHours) || 0,
+                    status: 'approved'
+                }).eq('id', id);
+
+                alert('AI 수료증 분석 완료!');
+                fetchCertificates();
+
+            } catch (err) {
+                alert('AI 분석 중 오류가 발생했습니다: ' + err.message);
+            }
+        }
+
+        // 4. API 키 설정 로직
+        function saveApiKey() {
+            const key = document.getElementById('input-api-key').value.trim();
+            if (key) {
+                localStorage.setItem('gemini_api_key', key);
+                alert('Gemini API 키가 저장되었습니다.');
+            }
+        }
+
+        function loadApiKey() {
+            document.getElementById('input-api-key').value = localStorage.getItem('gemini_api_key') || '';
+        }
+
+        // 5. Excel 다운로드
+        async function exportToExcel() {
+            if (!supabaseClient) return;
+
+            const { data, error } = await supabaseClient.from('certificates').select('*');
+            if (error || !data) return alert('데이터를 내보내지 못했습니다.');
+
+            const excelData = data.map(item => ({
+                '성명': item.assistant_name,
+                '생년월일': item.birth_date,
+                '교육 강좌명': item.course_name,
+                '이수 시간(시간)': item.training_hours,
+                '제출일': new Date(item.created_at).toLocaleDateString()
+            }));
+
+            const worksheet = XLSX.utils.json_to_sheet(excelData);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "활동지원사_이수현황");
+            XLSX.writeFile(workbook, "활동지원사_누적이수시간_명단.xlsx");
+        }
+    </script>
+</body>
+</html>

@@ -47,7 +47,7 @@
                 <div>
                     <div class="flex items-center gap-2">
                         <h1 class="text-xl font-extrabold text-[#090c1d]">활동지원사 수료증 센터</h1>
-                        <span class="bg-[#f8f9fa] border border-[#e8e8e8] text-[#6647f0] text-[10px] font-mono font-bold px-2 py-0.5 btn-pill uppercase tracking-wider">v3.5 FIXED</span>
+                        <span class="bg-[#f8f9fa] border border-[#e8e8e8] text-[#6647f0] text-[10px] font-mono font-bold px-2 py-0.5 btn-pill uppercase tracking-wider">v3.6 ULTRA</span>
                     </div>
                     <p class="text-xs text-[#646464] mt-0.5">수원 장애인복지관 교육 이수 통합 관리 플랫폼</p>
                 </div>
@@ -452,7 +452,7 @@
             });
         }
 
-        // 🤖 Gemini AI 분석 함수 (최신 모델 호환 적용)
+        // 🤖 Gemini AI 분석 함수 (최신 gemini-3.8-flash 모델 적용)
         async function runAiAnalysisFromBase64(base64Data, mimeType) {
             let admins = JSON.parse(localStorage.getItem('admin_accounts') || '[]');
             let activeApiKey = '';
@@ -478,8 +478,8 @@
                 const prompt = `이 경기도평생학습포털(GSEEK) 수료증 이미지에서 다음 항목을 정확히 추출하여 반드시 아래 JSON 구조체로만 반환하세요:
 {"courseName": "노인일자리 사례로 배우는 안전사고 예방교육", "trainingHours": 6}`;
 
-                // 🛠️ 최신 gemini-2.5-flash 모델 엔드포인트 호출
-                const apiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${activeApiKey}`, {
+                // 🛠️ 구글 권장 최신 gemini-3.8-flash 모델 엔드포인트 호출
+                const apiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${activeApiKey}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({

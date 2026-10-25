@@ -8,7 +8,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Supabase JS Client CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-    <!-- ExcelJS CDN (고급 스타일, 셀 병합, SUBTOTAL 함수 지원) -->
+    <!-- ExcelJS CDN -->
     <script src="https://cdn.jsdelivr.net/npm/exceljs@4.3.0/dist/exceljs.min.js"></script>
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=Sometype+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -47,7 +47,7 @@
                 <div>
                     <div class="flex items-center gap-2">
                         <h1 class="text-xl font-extrabold text-[#090c1d]">활동지원사 수료증 센터</h1>
-                        <span class="bg-[#f8f9fa] border border-[#e8e8e8] text-[#6647f0] text-[10px] font-mono font-bold px-2 py-0.5 btn-pill uppercase tracking-wider">v4.4 EXCEL-STYLE</span>
+                        <span class="bg-[#f8f9fa] border border-[#e8e8e8] text-[#6647f0] text-[10px] font-mono font-bold px-2 py-0.5 btn-pill uppercase tracking-wider">v4.5 SIGNUP</span>
                     </div>
                     <p class="text-xs text-[#646464] mt-0.5">수원 장애인복지관 교육 이수 통합 관리 플랫폼</p>
                 </div>
@@ -143,7 +143,7 @@
                     </div>
                     <div class="flex items-center gap-3">
                         <button onclick="openApiKeyModal()" class="px-4 py-2.5 text-xs font-bold bg-purple-50 text-[#6647f0] border border-purple-200 btn-pill hover:bg-purple-100 transition flex items-center gap-1.5">
-                            🔑 API 키 관리
+                            🔑 API 키 변경
                         </button>
                         <button onclick="fetchCertificates()" class="px-4 py-2.5 text-xs font-bold text-[#202020] border border-[#e8e8e8] btn-pill hover:bg-[#f8f9fa] transition flex items-center gap-1.5">
                             🔄 새로고침
@@ -154,9 +154,10 @@
                     </div>
                 </div>
 
+                <!-- 내 API 키 적용 상태 확인 박스 -->
                 <div class="bg-white p-6 rounded-[16px] border border-[#e8e8e8] card-shadow">
                     <div class="flex items-center justify-between mb-3">
-                        <h3 class="text-xs font-bold uppercase tracking-wider text-[#838383] font-mono">내 API 키 활성도 상태</h3>
+                        <h3 class="text-xs font-bold uppercase tracking-wider text-[#838383] font-mono">내 Gemini API 키 적용 상태</h3>
                         <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-xs text-[#0091ff] hover:underline font-bold font-mono">🔗 Google AI Studio 바로가기 ↗</a>
                     </div>
                     <div id="api-status-container" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
@@ -188,7 +189,7 @@
                         <h2 class="text-xl font-extrabold text-[#090c1d]">관리자 회원 계정 관리</h2>
                         <p class="text-xs text-[#646464] mt-1">최고 관리자(admin) 전용 메뉴입니다.</p>
                     </div>
-                    <button onclick="openApiKeyModal('new')" class="px-4 py-2.5 text-xs font-bold bg-[#6647f0] text-white btn-pill transition shadow-sm">
+                    <button onclick="openSignupModal()" class="px-4 py-2.5 text-xs font-bold bg-[#6647f0] text-white btn-pill transition shadow-sm">
                         + 신규 관리자 등록
                     </button>
                 </div>
@@ -219,7 +220,7 @@
         <button onclick="openLoginModal()" class="hover:text-[#202020] underline transition font-mono">관리자</button>
     </footer>
 
-    <!-- 로그인 모달 -->
+    <!-- 로그인 모달 (계정생성 버튼 추가) -->
     <div id="login-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center z-50">
         <div class="bg-white p-8 rounded-[20px] max-w-sm w-full card-shadow mx-4">
             <h3 class="text-xl font-extrabold text-[#090c1d] mb-1">관리자 로그인</h3>
@@ -241,38 +242,58 @@
                     <button type="button" onclick="closeLoginModal()" class="flex-1 py-3 border border-[#e8e8e8] text-xs font-bold rounded-full hover:bg-gray-50 transition">취소</button>
                     <button type="submit" class="flex-1 py-3 bg-[#202020] text-white text-xs font-bold rounded-full hover:bg-black transition">로그인</button>
                 </div>
+                <div class="text-center pt-3 border-t border-gray-100">
+                    <button type="button" onclick="closeLoginModal(); openSignupModal();" class="text-xs text-[#6647f0] hover:underline font-bold">계정이 없으신가요? [계정 생성하기]</button>
+                </div>
             </form>
         </div>
     </div>
 
-    <!-- API 키 관리/등록 모달 -->
-    <div id="apikey-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center z-50">
+    <!-- 신규 관리자 계정 생성 모달 (이름, 아이디, 비번, API키 입력) -->
+    <div id="signup-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center z-50">
         <div class="bg-white p-8 rounded-[20px] max-w-md w-full card-shadow mx-4">
-            <h3 id="apikey-modal-title" class="text-xl font-extrabold text-[#090c1d] mb-1">API 키 관리</h3>
-            <p id="apikey-modal-desc" class="text-xs text-[#646464] mb-4">Gemini API 키를 등록하거나 변경합니다.</p>
+            <h3 class="text-xl font-extrabold text-[#090c1d] mb-1">관리자 계정 생성</h3>
+            <p class="text-xs text-[#646464] mb-4">이름, 아이디, 비밀번호와 본인의 Gemini API 키를 입력하세요.</p>
 
-            <form onsubmit="handleSaveApiKey(event)" class="space-y-4">
-                <div id="reg-fields-group">
-                    <div class="mb-3">
-                        <label class="block text-xs font-bold text-[#202020] uppercase tracking-wider mb-1 font-mono">관리자 이름</label>
-                        <input type="text" id="reg-name" placeholder="예: 김복지" class="w-full px-4 py-3 rounded-[9px] border border-[#d4d4d4] text-sm focus:border-[#6647f0] focus:outline-none">
-                    </div>
-                    <div class="mb-3">
-                        <label class="block text-xs font-bold text-[#202020] uppercase tracking-wider mb-1 font-mono">사용할 아이디 (ID)</label>
-                        <input type="text" id="reg-id" placeholder="예: welfare01" class="w-full px-4 py-3 rounded-[9px] border border-[#d4d4d4] text-sm focus:border-[#6647f0] focus:outline-none">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-[#202020] uppercase tracking-wider mb-1 font-mono">비밀번호</label>
-                        <input type="password" id="reg-pw" placeholder="비밀번호 설정" class="w-full px-4 py-3 rounded-[9px] border border-[#d4d4d4] text-sm focus:border-[#6647f0] focus:outline-none">
-                    </div>
+            <form onsubmit="handleRegisterAdmin(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-[#202020] uppercase tracking-wider mb-1 font-mono">관리자 이름</label>
+                    <input type="text" id="signup-name" required placeholder="예: 김복지" class="w-full px-4 py-3 rounded-[9px] border border-[#d4d4d4] text-sm focus:border-[#6647f0] focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-[#202020] uppercase tracking-wider mb-1 font-mono">사용할 아이디 (ID)</label>
+                    <input type="text" id="signup-id" required placeholder="예: welfare01" class="w-full px-4 py-3 rounded-[9px] border border-[#d4d4d4] text-sm focus:border-[#6647f0] focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-[#202020] uppercase tracking-wider mb-1 font-mono">비밀번호</label>
+                    <input type="password" id="signup-pw" required placeholder="비밀번호 설정" class="w-full px-4 py-3 rounded-[9px] border border-[#d4d4d4] text-sm focus:border-[#6647f0] focus:outline-none">
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-[#202020] uppercase tracking-wider mb-1 font-mono">Google Gemini API Key</label>
-                    <input type="password" id="reg-apikey" required placeholder="AQ... 또는 AIzaSy..." class="w-full px-4 py-3 rounded-[9px] border border-[#d4d4d4] text-sm focus:border-[#6647f0] focus:outline-none">
+                    <input type="password" id="signup-apikey" required placeholder="AQ... 또는 AIzaSy..." class="w-full px-4 py-3 rounded-[9px] border border-[#d4d4d4] text-sm focus:border-[#6647f0] focus:outline-none">
+                </div>
+                <div class="flex gap-2 pt-2">
+                    <button type="button" onclick="closeSignupModal()" class="flex-1 py-3 border border-[#e8e8e8] text-xs font-bold rounded-full hover:bg-gray-50 transition">취소</button>
+                    <button type="submit" class="flex-1 py-3 bg-[#6647f0] text-white text-xs font-bold rounded-full hover:bg-violet-700 transition">계정 생성 및 가입</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- API 키 변경 모달 (로그인 상태에서 본인 키 수정용) -->
+    <div id="apikey-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center z-50">
+        <div class="bg-white p-8 rounded-[20px] max-w-md w-full card-shadow mx-4">
+            <h3 class="text-xl font-extrabold text-[#090c1d] mb-1">Gemini API 키 변경</h3>
+            <p class="text-xs text-[#646464] mb-4">현재 계정에 적용할 새로운 API 키를 입력하세요.</p>
+
+            <form onsubmit="handleUpdateApiKey(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-[#202020] uppercase tracking-wider mb-1 font-mono">Google Gemini API Key</label>
+                    <input type="password" id="edit-apikey" required placeholder="AQ... 또는 AIzaSy..." class="w-full px-4 py-3 rounded-[9px] border border-[#d4d4d4] text-sm focus:border-[#6647f0] focus:outline-none">
                 </div>
                 <div class="flex gap-2 pt-2">
                     <button type="button" onclick="closeApiKeyModal()" class="flex-1 py-3 border border-[#e8e8e8] text-xs font-bold rounded-full hover:bg-gray-50 transition">취소</button>
-                    <button type="submit" class="flex-1 py-3 bg-[#6647f0] text-white text-xs font-bold rounded-full hover:bg-violet-700 transition">저장하기</button>
+                    <button type="submit" class="flex-1 py-3 bg-[#6647f0] text-white text-xs font-bold rounded-full hover:bg-violet-700 transition">키 변경 저장</button>
                 </div>
             </form>
         </div>
@@ -354,39 +375,17 @@
         function openLoginModal() { document.getElementById('login-modal').classList.remove('hidden'); document.getElementById('login-modal').classList.add('flex'); }
         function closeLoginModal() { document.getElementById('login-modal').classList.add('hidden'); document.getElementById('login-modal').classList.remove('flex'); }
         
-        function openApiKeyModal(mode = 'edit') {
-            const modal = document.getElementById('apikey-modal');
-            const fieldsGroup = document.getElementById('reg-fields-group');
-            const title = document.getElementById('apikey-modal-title');
-            const desc = document.getElementById('apikey-modal-desc');
+        function openSignupModal() { document.getElementById('signup-modal').classList.remove('hidden'); document.getElementById('signup-modal').classList.add('flex'); }
+        function closeSignupModal() { document.getElementById('signup-modal').classList.add('hidden'); document.getElementById('signup-modal').classList.remove('flex'); }
 
-            if (mode === 'new' || !currentLoggedInAdmin) {
-                fieldsGroup.style.display = 'block';
-                document.getElementById('reg-name').required = true;
-                document.getElementById('reg-id').required = true;
-                document.getElementById('reg-pw').required = true;
-                document.getElementById('reg-name').value = '';
-                document.getElementById('reg-id').value = '';
-                document.getElementById('reg-pw').value = '';
-                document.getElementById('reg-apikey').value = '';
-                title.innerText = '신규 관리자 및 API 키 등록';
-                desc.innerText = '새로운 관리자 계정과 Gemini API 키를 등록합니다.';
-            } else {
-                fieldsGroup.style.display = 'none';
-                document.getElementById('reg-name').required = false;
-                document.getElementById('reg-id').required = false;
-                document.getElementById('reg-pw').required = false;
-                document.getElementById('reg-apikey').value = currentLoggedInAdmin.apiKey || '';
-                title.innerText = `API 키 관리 (${currentLoggedInAdmin.name})`;
-                desc.innerText = '등록된 Gemini API 키를 확인하거나 변경합니다.';
-            }
-
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
+        function openApiKeyModal() {
+            document.getElementById('edit-apikey').value = currentLoggedInAdmin.apiKey || '';
+            document.getElementById('apikey-modal').classList.remove('hidden');
+            document.getElementById('apikey-modal').classList.add('flex');
         }
-
         function closeApiKeyModal() { document.getElementById('apikey-modal').classList.add('hidden'); document.getElementById('apikey-modal').classList.remove('flex'); }
 
+        // 관리자 로그인 처리
         function handleAdminLogin(e) {
             e.preventDefault();
             const id = document.getElementById('login-id').value.trim();
@@ -414,6 +413,53 @@
             }
         }
 
+        // 신규 관리자 계정 생성 처리
+        function handleRegisterAdmin(e) {
+            e.preventDefault();
+            const name = document.getElementById('signup-name').value.trim();
+            const id = document.getElementById('signup-id').value.trim();
+            const pw = document.getElementById('signup-pw').value.trim();
+            const apiKey = document.getElementById('signup-apikey').value.trim();
+
+            let admins = JSON.parse(localStorage.getItem('admin_accounts') || '[]');
+            if (admins.some(a => a.id === id)) {
+                alert('이미 존재하는 아이디(ID)입니다. 다른 아이디를 입력해주세요.');
+                return;
+            }
+
+            const newAdmin = { id, name, pw, apiKey };
+            admins.push(newAdmin);
+            localStorage.setItem('admin_accounts', JSON.stringify(admins));
+
+            closeSignupModal();
+            document.getElementById('signup-name').value = '';
+            document.getElementById('signup-id').value = '';
+            document.getElementById('signup-pw').value = '';
+            document.getElementById('signup-apikey').value = '';
+
+            alert('관리자 계정이 성공적으로 생성되었습니다! 자동 로그인됩니다.');
+            localStorage.setItem('logged_in_admin_id', newAdmin.id);
+            goToAdminView(newAdmin);
+        }
+
+        // 로그인된 상태에서 API 키 변경 저장
+        function handleUpdateApiKey(e) {
+            e.preventDefault();
+            let admins = JSON.parse(localStorage.getItem('admin_accounts') || '[]');
+            const newKey = document.getElementById('edit-apikey').value.trim();
+
+            const index = admins.findIndex(a => a.id === currentLoggedInAdmin.id);
+            if (index >= 0) {
+                admins[index].apiKey = newKey;
+                currentLoggedInAdmin.apiKey = newKey;
+                localStorage.setItem('admin_accounts', JSON.stringify(admins));
+            }
+
+            closeApiKeyModal();
+            alert('Gemini API 키가 성공적으로 변경되었습니다!');
+            renderApiStatus();
+        }
+
         function handleLogout() {
             localStorage.removeItem('logged_in_admin_id');
             currentLoggedInAdmin = null;
@@ -421,42 +467,7 @@
             alert('로그아웃되었습니다.');
         }
 
-        function handleSaveApiKey(e) {
-            e.preventDefault();
-            let admins = JSON.parse(localStorage.getItem('admin_accounts') || '[]');
-            const apiKey = document.getElementById('reg-apikey').value.trim();
-
-            if (currentLoggedInAdmin && document.getElementById('reg-fields-group').style.display === 'none') {
-                const index = admins.findIndex(a => a.id === currentLoggedInAdmin.id);
-                if (index >= 0) {
-                    admins[index].apiKey = apiKey;
-                    currentLoggedInAdmin.apiKey = apiKey;
-                }
-                localStorage.setItem('admin_accounts', JSON.stringify(admins));
-                closeApiKeyModal();
-                alert('API 키가 성공적으로 업데이트되었습니다!');
-                goToAdminView(currentLoggedInAdmin);
-            } else {
-                const name = document.getElementById('reg-name').value.trim();
-                const id = document.getElementById('reg-id').value.trim();
-                const pw = document.getElementById('reg-pw').value.trim();
-
-                const existingIndex = admins.findIndex(a => a.id === id);
-                if (existingIndex >= 0) {
-                    admins[existingIndex] = { id, name, pw, apiKey };
-                } else {
-                    admins.push({ id, name, pw, apiKey });
-                }
-
-                localStorage.setItem('admin_accounts', JSON.stringify(admins));
-                closeApiKeyModal();
-                alert('관리자 계정 및 API 키가 안전하게 등록되었습니다!');
-
-                const savedAdmin = admins.find(a => a.id === id);
-                goToAdminView(savedAdmin);
-            }
-        }
-
+        // 대시보드 내 본인 API 키 상태 확인 위젯 렌더링
         function renderApiStatus() {
             const container = document.getElementById('api-status-container');
             if (!currentLoggedInAdmin) return;
@@ -468,11 +479,11 @@
             container.innerHTML = `
                 <div class="p-4 rounded-[12px] border border-[#e8e8e8] bg-[#f8f9fa] flex items-center justify-between">
                     <div>
-                        <p class="text-xs font-bold text-[#090c1d]">${me.name} (${me.id})</p>
-                        <p class="text-[10px] text-[#838383] font-mono mt-0.5">상태: ${hasKey ? '정상 등록됨' : '키 미등록 상태'}</p>
+                        <p class="text-xs font-bold text-[#090c1d]">${me.name} (${me.id}) 계정</p>
+                        <p class="text-[10px] text-[#838383] font-mono mt-0.5">키 상태: ${hasKey ? '등록 완료 (' + me.apiKey.substring(0, 6) + '...)' : '미등록 상태'}</p>
                     </div>
                     <span class="px-3 py-1 text-xs font-bold font-mono btn-pill ${hasKey ? 'bg-emerald-50 text-[#00c07a] border border-emerald-200' : 'bg-red-50 text-red-500 border border-red-200'}">
-                        ${hasKey ? '● API 활성화됨' : '○ 비활성화'}
+                        ${hasKey ? '● API 적용됨' : '○ 키 필요'}
                     </span>
                 </div>
             `;
@@ -756,11 +767,11 @@
                 fetchCertificates();
             } else {
                 alert('API 키가 등록되어 있는지 확인해 주세요.');
-                openApiKeyModal('edit');
+                openApiKeyModal();
             }
         }
 
-        // 📊 ExcelJS 기반 맞춤 서식 엑셀 내보내기 구현
+        // 📊 맞춤 서식 엑셀 내보내기 구현
         async function exportToExcel() {
             if (!supabaseClient) return;
 
@@ -770,7 +781,6 @@
             const workbook = new ExcelJS.Workbook();
             const worksheet = workbook.addWorksheet('교육수료목록');
 
-            // 1. 요청하신 정확한 열 너비 적용 (A:25, B:13, C:13, D:50)
             worksheet.columns = [
                 { key: 'name', width: 25 },
                 { key: 'birth', width: 13 },
@@ -778,7 +788,6 @@
                 { key: 'course', width: 50 }
             ];
 
-            // 2. 1행 : 메인 타이틀 (높이: 35, 글씨 크기: 20pt)
             const titleRow = worksheet.getRow(1);
             titleRow.height = 35;
             worksheet.mergeCells('A1:D1');
@@ -787,7 +796,6 @@
             titleCell.font = { name: '맑은 고딕', size: 20, bold: true };
             titleCell.alignment = { vertical: 'middle', horizontal: 'center' };
 
-            // 3. 2행 : 총 이수 누적시간 요약 (높이: 25)
             const summaryRow = worksheet.getRow(2);
             summaryRow.height = 25;
             
@@ -798,7 +806,7 @@
             labelCell.fill = {
                 type: 'pattern',
                 pattern: 'solid',
-                fgColor: { argb: 'FFF2F2F2' } // 옅은 회색
+                fgColor: { argb: 'FFF2F2F2' }
             };
 
             const lastRowIndex = data.length + 3;
@@ -811,7 +819,6 @@
             formulaCell.font = { name: '맑은 고딕', size: 11, bold: true };
             formulaCell.alignment = { vertical: 'middle', horizontal: 'center' };
 
-            // 4. 3행 : 헤더 (높이: 25)
             const headerRow = worksheet.getRow(3);
             headerRow.height = 25;
             const headers = ['지원사 성명', '생년월일', '교육시간', '이수 교육과정명'];
@@ -824,11 +831,10 @@
                 cell.fill = {
                     type: 'pattern',
                     pattern: 'solid',
-                    fgColor: { argb: 'FFD9E1F2' } // 연한 청회색
+                    fgColor: { argb: 'FFD9E1F2' }
                 };
             });
 
-            // 5. 4행 이하 : 전체 가운데 정렬 적용 (높이: 20)
             data.forEach((item, index) => {
                 const rowIndex = index + 4;
                 const row = worksheet.getRow(rowIndex);
@@ -848,10 +854,9 @@
 
                 const courseCell = row.getCell(4);
                 courseCell.value = item.course_name;
-                courseCell.alignment = { vertical: 'middle', horizontal: 'center' }; // D열 포함 전체 가운데 정렬
+                courseCell.alignment = { vertical: 'middle', horizontal: 'center' };
             });
 
-            // 6. 전체 표 필터 및 테두리 설정
             worksheet.autoFilter = `A3:D${lastRowIndex}`;
 
             const thinBorder = {
@@ -868,7 +873,6 @@
                 }
             }
 
-            // 7. 다운로드 실행
             const buffer = await workbook.xlsx.writeBuffer();
             const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
             const url = window.URL.createObjectURL(blob);

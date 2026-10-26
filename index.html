@@ -47,7 +47,7 @@
                 <div>
                     <div class="flex items-center gap-2">
                         <h1 class="text-xl font-extrabold text-[#090c1d]">활동지원사 수료증 센터</h1>
-                        <span class="bg-[#f8f9fa] border border-[#e8e8e8] text-[#6647f0] text-[10px] font-mono font-bold px-2 py-0.5 btn-pill uppercase tracking-wider">v4.9 AUTO-AI</span>
+                        <span class="bg-[#f8f9fa] border border-[#e8e8e8] text-[#6647f0] text-[10px] font-mono font-bold px-2 py-0.5 btn-pill uppercase tracking-wider">v5.1 CORS-FIXED</span>
                     </div>
                     <p class="text-xs text-[#646464] mt-0.5">수원 장애인복지관 교육 이수 통합 관리 플랫폼</p>
                 </div>
@@ -129,7 +129,7 @@
                 <div id="auto-batch-progress" class="hidden bg-purple-50 border border-purple-200 p-4 rounded-[16px] text-xs font-bold text-[#6647f0] flex items-center justify-between">
                     <div class="flex items-center gap-2">
                         <span class="animate-spin text-base">🤖</span>
-                        <span id="batch-progress-text">미분석 수료증을 자동으로 일괄 판독 중입니다... (0/0)</span>
+                        <span id="batch-progress-text">수료증 AI 정밀 판독 중입니다... (0/0)</span>
                     </div>
                 </div>
 
@@ -139,7 +139,7 @@
                             <h2 class="text-xl font-extrabold text-[#090c1d]">제출 명단 및 누적 이수 현황</h2>
                             <span id="total-count-badge" class="bg-[#f8f9fa] text-[#202020] text-xs font-mono font-bold px-2.5 py-1 btn-pill border border-[#e8e8e8]">총 0건</span>
                         </div>
-                        <p class="text-xs text-[#646464] mt-1">대시보드 진입 시 미분석 수료증을 백그라운드에서 자동 판독합니다.</p>
+                        <p class="text-xs text-[#646464] mt-1">대시보드 진입 시 미분석 수료증을 백그라운드에서 자동으로 정밀 판독합니다.</p>
                     </div>
                     <div class="flex items-center gap-3">
                         <button onclick="openApiKeyModal()" class="px-4 py-2.5 text-xs font-bold bg-purple-50 text-[#6647f0] border border-purple-200 btn-pill hover:bg-purple-100 transition flex items-center gap-1.5">
@@ -598,7 +598,37 @@
             }
         }
 
-        async function analyzeSingleImage(imageUrl, mimeType) {
+        // 이미지 URL을 Base64로 전환 (CORS 우회 Canvas 변환 포함)
+        function urlToBase64(url) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.crossOrigin = 'Anonymous';
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0);
+                    const dataURL = canvas.toDataURL('image/jpeg');
+                    resolve(dataURL.split(',')[1]);
+                };
+                img.onerror = () => {
+                    fetch(url)
+                        .then(res => res.blob())
+                        .then(blob => {
+                            const reader = new FileReader();
+                            reader.onloadend = () => resolve(reader.result.split(',')[1]);
+                            reader.onerror = reject;
+                            reader.readAsDataURL(blob);
+                        })
+                        .catch(reject);
+                };
+                img.src = url;
+            });
+        }
+
+        // 🤖 Gemini 정밀 분석 실행 함수 (CORS 보장 및 정밀 OCR)
+        async function analyzeSingleImage(imageUrl) {
             let admins = JSON.parse(localStorage.getItem('admin_accounts') || '[]');
             let activeApiKey = '';
 
@@ -618,16 +648,12 @@
             if (!activeApiKey) return null;
 
             try {
-                const response = await fetch(imageUrl);
-                const blob = await response.blob();
-                const base64Data = await new Promise(resolve => {
-                    const reader = new FileReader();
-                    reader.onloadend = () => resolve(reader.result.split(',')[1]);
-                    reader.readAsDataURL(blob);
-                });
+                const base64Data = await urlToBase64(imageUrl);
 
-                const prompt = `이 경기도평생학습포털(GSEEK) 수료증 이미지에서 강좌명과 학습시간을 추출하세요.
-반드시 아래 JSON 포맷으로만 응답하세요:
+                const prompt = `이 이미지는 경기도평생학습포털(GSEEK 지식) 수료증 문서입니다.
+이미지에서 '강 좌 명' (또는 강좌명) 부분에 적힌 글자와 '학 습 시 간' (또는 학습시간) 부분에 적힌 시간 숫자를 정밀 추출하세요.
+
+반드시 다른 설명 없이 아래 JSON 규격으로만 답하세요:
 {"courseName": "노인일자리 사례로 배우는 안전사고 예방교육", "trainingHours": 6}`;
 
                 const apiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${activeApiKey}`, {
@@ -637,7 +663,7 @@
                         contents: [{
                             parts: [
                                 { text: prompt },
-                                { inline_data: { mime_type: blob.type || mimeType || "image/jpeg", data: base64Data } }
+                                { inline_data: { mime_type: "image/jpeg", data: base64Data } }
                             ]
                         }],
                         generationConfig: { response_mime_type: "application/json" }
@@ -707,7 +733,6 @@
             }
         }
 
-        // 📊 대시보드 진입 시 미분석 항목 자동 일괄 분석 실행
         async function fetchCertificates() {
             if (!supabaseClient) return;
 
@@ -730,7 +755,6 @@
 
             renderCertificateRows(data);
 
-            // 🤖 미분석(분석 대기 중) 상태인 항목 자동 일괄 분석 백그라운드 실행
             const pendingItems = data.filter(item => 
                 item.course_name === '분석 대기 중' || 
                 item.course_name.includes('분석 실패')
@@ -752,17 +776,16 @@
 
             for (let item of pendingItems) {
                 current++;
-                progressText.innerText = `수료증 AI 자동 분석 중... (${current}/${total}건 - ${item.assistant_name}님)`;
+                progressText.innerText = `수료증 AI 정밀 분석 중... (${current}/${total}건 - ${item.assistant_name}님)`;
 
                 const aiResult = await analyzeSingleImage(item.image_url);
-                if (aiResult) {
+                if (aiResult && !aiResult.courseName.includes('분석 실패')) {
                     await supabaseClient.from('certificates').update({
                         course_name: aiResult.courseName,
                         training_hours: aiResult.trainingHours,
                         status: 'approved'
                     }).eq('id', item.id);
                 } else {
-                    // 분석 실패 시 담당자 확인 필요 문구 지정
                     await supabaseClient.from('certificates').update({
                         course_name: '분석 실패 - 담당자 확인 필요',
                         training_hours: 0,
@@ -774,7 +797,7 @@
             progressText.innerText = `🎉 총 ${total}건의 수료증 자동 분석이 완료되었습니다!`;
             setTimeout(() => {
                 progressContainer.classList.add('hidden');
-                fetchCertificates(); // 화면 갱신
+                fetchCertificates();
             }, 1200);
         }
 
@@ -787,7 +810,7 @@
                         <td class="py-4 px-5 font-bold text-[#090c1d]">${item.assistant_name}</td>
                         <td class="py-4 px-5 text-[#646464] font-mono text-xs">${item.birth_date}</td>
                         <td class="py-4 px-5">
-                            <span class="${isFailed ? 'text-red-500 font-bold bg-red-50 px-2 py-1 rounded border border-red-200' : 'text-[#202020] font-medium'}">
+                            <span class="${isFailed ? 'text-red-500 font-bold bg-red-50 px-2 py-1 rounded border border-red-200 font-mono text-xs' : 'text-[#202020] font-medium'}">
                                 ${item.course_name}
                             </span>
                         </td>
@@ -834,7 +857,7 @@
         async function reanalyzeItem(id, imageUrl) {
             alert('해당 수료증 AI 재분석을 진행합니다...');
             const aiResult = await analyzeSingleImage(imageUrl);
-            if (aiResult) {
+            if (aiResult && !aiResult.courseName.includes('분석 실패')) {
                 await supabaseClient.from('certificates').update({
                     course_name: aiResult.courseName,
                     training_hours: aiResult.trainingHours,
@@ -848,7 +871,7 @@
                     training_hours: 0,
                     status: 'failed'
                 }).eq('id', id);
-                alert('AI 분석에 실패했습니다. API 키를 확인하시거나 [수정] 버튼을 통해 직접 입력해 주세요.');
+                alert('AI 분석에 실패했습니다. 이미지 파일 확인 후 [수정] 버튼을 이용해 주시기 바랍니다.');
             }
             fetchCertificates();
         }

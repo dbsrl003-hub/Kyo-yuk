@@ -47,7 +47,7 @@
                 <div>
                     <div class="flex items-center gap-2">
                         <h1 class="text-xl font-extrabold text-[#090c1d]">활동지원사 수료증 센터</h1>
-                        <span class="bg-[#f8f9fa] border border-[#e8e8e8] text-[#6647f0] text-[10px] font-mono font-bold px-2 py-0.5 btn-pill uppercase tracking-wider">v5.1 CORS-FIXED</span>
+                        <span class="bg-[#f8f9fa] border border-[#e8e8e8] text-[#6647f0] text-[10px] font-mono font-bold px-2 py-0.5 btn-pill uppercase tracking-wider">v5.2 MODEL-FIX</span>
                     </div>
                     <p class="text-xs text-[#646464] mt-0.5">수원 장애인복지관 교육 이수 통합 관리 플랫폼</p>
                 </div>
@@ -598,7 +598,7 @@
             }
         }
 
-        // 이미지 URL을 Base64로 전환 (CORS 우회 Canvas 변환 포함)
+        // 이미지 URL을 Base64로 변환 (CORS 우회)
         function urlToBase64(url) {
             return new Promise((resolve, reject) => {
                 const img = new Image();
@@ -627,7 +627,7 @@
             });
         }
 
-        // 🤖 Gemini 정밀 분석 실행 함수 (CORS 보장 및 정밀 OCR)
+        // 🤖 Gemini 정밀 분석 실행 함수 (올바른 모델명 'gemini-1.5-flash' 적용)
         async function analyzeSingleImage(imageUrl) {
             let admins = JSON.parse(localStorage.getItem('admin_accounts') || '[]');
             let activeApiKey = '';
@@ -651,12 +651,12 @@
                 const base64Data = await urlToBase64(imageUrl);
 
                 const prompt = `이 이미지는 경기도평생학습포털(GSEEK 지식) 수료증 문서입니다.
-이미지에서 '강 좌 명' (또는 강좌명) 부분에 적힌 글자와 '학 습 시 간' (또는 학습시간) 부분에 적힌 시간 숫자를 정밀 추출하세요.
+이미지에서 '강 좌 명' (또는 강좌명) 부분에 적힌 교육 과정 이름과 '학 습 시 간' (또는 학습시간) 부분에 적힌 시간 숫자만 정확히 추출하세요.
 
 반드시 다른 설명 없이 아래 JSON 규격으로만 답하세요:
 {"courseName": "노인일자리 사례로 배우는 안전사고 예방교육", "trainingHours": 6}`;
 
-                const apiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${activeApiKey}`, {
+                const apiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${activeApiKey}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -797,6 +797,7 @@
             progressText.innerText = `🎉 총 ${total}건의 수료증 자동 분석이 완료되었습니다!`;
             setTimeout(() => {
                 progressContainer.classList.add('hidden');
+                // 분석 완료 후 새로고침 없이 최신 테이블 렌더링만 갱신
                 fetchCertificates();
             }, 1200);
         }
@@ -821,7 +822,7 @@
                         </td>
                         <td class="py-4 px-5 text-right flex items-center justify-end gap-1.5">
                             <button onclick="reanalyzeItem('${item.id}', '${item.image_url}')" class="px-2.5 py-1 text-xs font-bold bg-[#202020] text-white hover:bg-black btn-pill transition shadow-sm">
-                                🤖 재분석
+                                🤖 AI 분석
                             </button>
                             <button onclick="openManualEditModal('${item.id}', '${item.assistant_name}', '${item.course_name}', ${item.training_hours})" class="px-2.5 py-1 text-xs font-bold bg-blue-50 text-blue-600 hover:bg-blue-100 btn-pill transition">
                                 ✏️ 수정
@@ -871,7 +872,7 @@
                     training_hours: 0,
                     status: 'failed'
                 }).eq('id', id);
-                alert('AI 분석에 실패했습니다. 이미지 파일 확인 후 [수정] 버튼을 이용해 주시기 바랍니다.');
+                alert('AI 분석에 실패했습니다. [수정] 버튼을 통해 직접 입력해 주세요.');
             }
             fetchCertificates();
         }

@@ -47,7 +47,7 @@
                 <div>
                     <div class="flex items-center gap-2">
                         <h1 class="text-xl font-extrabold text-[#090c1d]">활동지원사 수료증 센터</h1>
-                        <span class="bg-[#f8f9fa] border border-[#e8e8e8] text-[#0091ff] text-[10px] font-mono font-bold px-2 py-0.5 btn-pill uppercase tracking-wider">v7.5 COMPLETE-EDIT</span>
+                        <span class="bg-[#f8f9fa] border border-[#e8e8e8] text-[#0091ff] text-[10px] font-mono font-bold px-2 py-0.5 btn-pill uppercase tracking-wider">v7.6 PW-5612</span>
                     </div>
                     <p class="text-xs text-[#646464] mt-0.5">수원 장애인복지관 교육 이수 통합 관리 플랫폼</p>
                 </div>
@@ -75,7 +75,7 @@
                     <h2 class="text-3xl font-extrabold text-[#090c1d]">교육 수료증 제출하기</h2>
                     <p class="text-sm text-[#646464] mt-2">이수하신 교육 과정을 선택하고 수료증 파일을 업로드해 주세요.</p>
                     
-                    <!-- 요청하신 안내 문구 추가 -->
+                    <!-- 안내 문구 -->
                     <div class="mt-4 p-3.5 bg-blue-50 border border-blue-100 rounded-[12px] text-xs font-bold text-[#0066cc] flex items-center gap-2">
                         <span>💡</span>
                         <span>교육명과 이수시간은 수료증에 나와 있으니 보고 작성해주시면 됩니다.</span>
@@ -102,7 +102,8 @@
 
                     <div>
                         <label class="block text-xs font-bold text-[#202020] uppercase tracking-wider mb-2 font-mono">04. 이수 시간 (시간 단위 숫자) <span class="text-red-500">*</span></label>
-                        <input type="number" id="input-hours" required min="1" max="100" placeholder="예: 4 (숫자만 입력)" class="w-full px-4 py-3.5 rounded-[9px] border border-[#d4d4d4] text-sm focus:border-[#0091ff] focus:outline-none transition">
+                        <!-- 이수 시간 예시를 6시간으로 변경 -->
+                        <input type="number" id="input-hours" required min="1" max="100" placeholder="예: 6 (숫자만 입력)" class="w-full px-4 py-3.5 rounded-[9px] border border-[#d4d4d4] text-sm focus:border-[#0091ff] focus:outline-none transition">
                     </div>
 
                     <div>
@@ -274,7 +275,6 @@
 
         let supabaseClient = null;
 
-        // 요청하신 7가지 기본 교육 과정 세팅
         const DEFAULT_COURSES = [
             "개인정보보호교육",
             "사회복지 종사자를 위한 성희롱 예방교육",
@@ -390,7 +390,6 @@
             alert('새로운 교육 과정이 추가되었습니다!');
         }
 
-        // 교육명 수정 기능
         function editCustomCourse(idx) {
             let courses = getStoredCourses();
             const currentName = courses[idx];
@@ -425,10 +424,11 @@
         function openLoginModal() { document.getElementById('login-modal').classList.remove('hidden'); document.getElementById('login-modal').classList.add('flex'); }
         function closeLoginModal() { document.getElementById('login-modal').classList.add('hidden'); document.getElementById('login-modal').classList.remove('flex'); }
 
+        // 관리자 로그인 비밀번호를 5612로 설정
         function handleAdminLogin(e) {
             e.preventDefault();
             const pw = document.getElementById('login-pw').value.trim();
-            if (pw === '1130') {
+            if (pw === '5612') {
                 closeLoginModal();
                 document.getElementById('login-pw').value = '';
                 localStorage.setItem('admin_logged_in', 'true');
@@ -544,7 +544,6 @@
             `).join('');
         }
 
-        // 수료증 내역 수정 모달 제어 함수들
         function openCertEditModal(id, name, course, hours) {
             document.getElementById('edit-cert-id').value = id;
             document.getElementById('edit-cert-name').value = name;

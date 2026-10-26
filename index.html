@@ -47,7 +47,7 @@
                 <div>
                     <div class="flex items-center gap-2">
                         <h1 class="text-xl font-extrabold text-[#090c1d]">활동지원사 수료증 센터</h1>
-                        <span class="bg-[#f8f9fa] border border-[#e8e8e8] text-[#6647f0] text-[10px] font-mono font-bold px-2 py-0.5 btn-pill uppercase tracking-wider">v4.5 SIGNUP</span>
+                        <span class="bg-[#f8f9fa] border border-[#e8e8e8] text-[#6647f0] text-[10px] font-mono font-bold px-2 py-0.5 btn-pill uppercase tracking-wider">v4.7 API-GUIDE</span>
                     </div>
                     <p class="text-xs text-[#646464] mt-0.5">수원 장애인복지관 교육 이수 통합 관리 플랫폼</p>
                 </div>
@@ -125,21 +125,13 @@
             </div>
 
             <div id="subview-certs" class="space-y-6">
-                <!-- 자동 AI 분석 프로그레스 바 -->
-                <div id="auto-batch-progress" class="hidden bg-purple-50 border border-purple-200 p-4 rounded-[16px] text-xs font-bold text-[#6647f0] flex items-center justify-between">
-                    <div class="flex items-center gap-2">
-                        <span class="animate-spin text-base">🤖</span>
-                        <span id="batch-progress-text">미분석 수료증을 자동으로 일괄 판독 중입니다... (0/0)</span>
-                    </div>
-                </div>
-
                 <div class="flex flex-col md:flex-row items-start md:items-center justify-between bg-white p-6 rounded-[16px] border border-[#e8e8e8] card-shadow gap-4">
                     <div>
                         <div class="flex items-center gap-2">
                             <h2 class="text-xl font-extrabold text-[#090c1d]">제출 명단 및 누적 이수 현황</h2>
                             <span id="total-count-badge" class="bg-[#f8f9fa] text-[#202020] text-xs font-mono font-bold px-2.5 py-1 btn-pill border border-[#e8e8e8]">총 0건</span>
                         </div>
-                        <p class="text-xs text-[#646464] mt-1">대시보드 진입 시 미분석 수료증을 백그라운드에서 자동 판독합니다.</p>
+                        <p class="text-xs text-[#646464] mt-1">수료증 내역을 확인하고 AI 분석을 실행할 수 있습니다.</p>
                     </div>
                     <div class="flex items-center gap-3">
                         <button onclick="openApiKeyModal()" class="px-4 py-2.5 text-xs font-bold bg-purple-50 text-[#6647f0] border border-purple-200 btn-pill hover:bg-purple-100 transition flex items-center gap-1.5">
@@ -174,7 +166,7 @@
                                     <th class="py-4 px-5">이수 시간</th>
                                     <th class="py-4 px-5">제출 일자</th>
                                     <th class="py-4 px-5">원본 문서</th>
-                                    <th class="py-4 px-5 text-right">상태 / 내역 관리</th>
+                                    <th class="py-4 px-5 text-right">AI 판독 및 관리</th>
                                 </tr>
                             </thead>
                             <tbody id="cert-table-body" class="divide-y divide-[#e8e8e8]"></tbody>
@@ -220,7 +212,7 @@
         <button onclick="openLoginModal()" class="hover:text-[#202020] underline transition font-mono">관리자</button>
     </footer>
 
-    <!-- 로그인 모달 (계정생성 버튼 추가) -->
+    <!-- 로그인 모달 -->
     <div id="login-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center z-50">
         <div class="bg-white p-8 rounded-[20px] max-w-sm w-full card-shadow mx-4">
             <h3 class="text-xl font-extrabold text-[#090c1d] mb-1">관리자 로그인</h3>
@@ -249,11 +241,17 @@
         </div>
     </div>
 
-    <!-- 신규 관리자 계정 생성 모달 (이름, 아이디, 비번, API키 입력) -->
+    <!-- 신규 관리자 계정 생성 모달 (API 키 발급 링크 안내 추가) -->
     <div id="signup-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center z-50">
         <div class="bg-white p-8 rounded-[20px] max-w-md w-full card-shadow mx-4">
             <h3 class="text-xl font-extrabold text-[#090c1d] mb-1">관리자 계정 생성</h3>
-            <p class="text-xs text-[#646464] mb-4">이름, 아이디, 비밀번호와 본인의 Gemini API 키를 입력하세요.</p>
+            <p class="text-xs text-[#646464] mb-3">정보와 본인의 Gemini API 키를 입력하세요.</p>
+            
+            <!-- API 키 발급 안내 박스 -->
+            <div class="mb-4 p-3 bg-purple-50 border border-purple-100 rounded-[10px] text-xs text-[#6647f0] flex items-center justify-between">
+                <span>🔑 API 키가 없으신가요?</span>
+                <a href="https://aistudio.google.com/app/apikey" target="_blank" class="font-bold underline hover:text-violet-800">Google AI Studio 바로가기 ↗</a>
+            </div>
 
             <form onsubmit="handleRegisterAdmin(event)" class="space-y-4">
                 <div>
@@ -280,11 +278,17 @@
         </div>
     </div>
 
-    <!-- API 키 변경 모달 (로그인 상태에서 본인 키 수정용) -->
+    <!-- API 키 변경 모달 (API 키 발급 링크 안내 추가) -->
     <div id="apikey-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center z-50">
         <div class="bg-white p-8 rounded-[20px] max-w-md w-full card-shadow mx-4">
             <h3 class="text-xl font-extrabold text-[#090c1d] mb-1">Gemini API 키 변경</h3>
-            <p class="text-xs text-[#646464] mb-4">현재 계정에 적용할 새로운 API 키를 입력하세요.</p>
+            <p class="text-xs text-[#646464] mb-3">현재 계정에 적용할 새로운 API 키를 입력하세요.</p>
+
+            <!-- API 키 발급 안내 박스 -->
+            <div class="mb-4 p-3 bg-purple-50 border border-purple-100 rounded-[10px] text-xs text-[#6647f0] flex items-center justify-between">
+                <span>🔑 API 키가 필요하신가요?</span>
+                <a href="https://aistudio.google.com/app/apikey" target="_blank" class="font-bold underline hover:text-violet-800">Google AI Studio 바로가기 ↗</a>
+            </div>
 
             <form onsubmit="handleUpdateApiKey(event)" class="space-y-4">
                 <div>
@@ -385,7 +389,6 @@
         }
         function closeApiKeyModal() { document.getElementById('apikey-modal').classList.add('hidden'); document.getElementById('apikey-modal').classList.remove('flex'); }
 
-        // 관리자 로그인 처리
         function handleAdminLogin(e) {
             e.preventDefault();
             const id = document.getElementById('login-id').value.trim();
@@ -413,7 +416,6 @@
             }
         }
 
-        // 신규 관리자 계정 생성 처리
         function handleRegisterAdmin(e) {
             e.preventDefault();
             const name = document.getElementById('signup-name').value.trim();
@@ -442,7 +444,6 @@
             goToAdminView(newAdmin);
         }
 
-        // 로그인된 상태에서 API 키 변경 저장
         function handleUpdateApiKey(e) {
             e.preventDefault();
             let admins = JSON.parse(localStorage.getItem('admin_accounts') || '[]');
@@ -467,7 +468,6 @@
             alert('로그아웃되었습니다.');
         }
 
-        // 대시보드 내 본인 API 키 상태 확인 위젯 렌더링
         function renderApiStatus() {
             const container = document.getElementById('api-status-container');
             if (!currentLoggedInAdmin) return;
@@ -587,7 +587,6 @@
             }
         }
 
-        // 1. 수료증 제출
         async function handleCertificateUpload(e) {
             e.preventDefault();
             if (!supabaseClient) {
@@ -637,7 +636,6 @@
             }
         }
 
-        // 2. 관리자 목록 조회 및 자동 일괄 분석
         async function fetchCertificates() {
             if (!supabaseClient) return;
 
@@ -659,17 +657,6 @@
             }
 
             renderCertificateRows(data);
-
-            const pendingItems = data.filter(item => 
-                item.course_name === '분석 대기 중' || 
-                item.course_name.includes('오류') || 
-                item.course_name.includes('실패') || 
-                item.course_name.includes('미등록')
-            );
-
-            if (pendingItems.length > 0) {
-                runBatchAutoAnalysis(pendingItems);
-            }
         }
 
         function renderCertificateRows(data) {
@@ -689,7 +676,7 @@
                         <td class="py-4 px-5 text-right flex items-center justify-end gap-2">
                             ${isAnalyzed ? '<span class="text-xs font-bold text-emerald-600 font-mono mr-1">● 완료</span>' : ''}
                             <button onclick="reanalyzeItem('${item.id}', '${item.image_url}')" class="px-2.5 py-1 text-xs font-bold bg-[#202020] text-white hover:bg-black btn-pill transition shadow-sm">
-                                🤖 재분석
+                                🤖 AI 분석
                             </button>
                             <button onclick="deleteCertificateRow('${item.id}', '${item.assistant_name}', '${item.image_url}')" class="px-2.5 py-1 text-xs font-bold bg-red-50 text-red-600 hover:bg-red-100 btn-pill transition">
                                 🗑️ 삭제
@@ -701,16 +688,12 @@
         }
 
         async function deleteCertificateRow(id, name, imageUrl) {
-            if (!confirm(`정말로 ${name} 지원사님의 수료증 내역을 삭제하시겠습니까?`)) {
-                return;
-            }
+            if (!confirm(`정말로 ${name} 지원사님의 수료증 내역을 삭제하시겠습니까?`)) return;
 
             try {
                 if (imageUrl) {
                     const fileName = imageUrl.split('/').pop();
-                    if (fileName) {
-                        await supabaseClient.storage.from('certificates').remove([fileName]);
-                    }
+                    if (fileName) await supabaseClient.storage.from('certificates').remove([fileName]);
                 }
 
                 const { error } = await supabaseClient.from('certificates').delete().eq('id', id);
@@ -721,36 +704,6 @@
             } catch (err) {
                 alert('삭제 도중 오류가 발생했습니다: ' + err.message);
             }
-        }
-
-        async function runBatchAutoAnalysis(pendingItems) {
-            const progressContainer = document.getElementById('auto-batch-progress');
-            const progressText = document.getElementById('batch-progress-text');
-            
-            progressContainer.classList.remove('hidden');
-
-            let total = pendingItems.length;
-            let current = 0;
-
-            for (let item of pendingItems) {
-                current++;
-                progressText.innerText = `미분석 수료증을 자동으로 일괄 판독 중입니다... (${current}/${total} - ${item.assistant_name}님)`;
-
-                const aiResult = await analyzeSingleImage(item.image_url);
-                if (aiResult) {
-                    await supabaseClient.from('certificates').update({
-                        course_name: aiResult.courseName,
-                        training_hours: aiResult.trainingHours,
-                        status: 'approved'
-                    }).eq('id', item.id);
-                }
-            }
-
-            progressText.innerText = `🎉 총 ${total}건의 수료증 자동 일괄 판독이 완료되었습니다!`;
-            setTimeout(() => {
-                progressContainer.classList.add('hidden');
-                fetchCertificates();
-            }, 1500);
         }
 
         async function reanalyzeItem(id, imageUrl) {
@@ -771,7 +724,6 @@
             }
         }
 
-        // 📊 맞춤 서식 엑셀 내보내기 구현
         async function exportToExcel() {
             if (!supabaseClient) return;
 
@@ -803,11 +755,7 @@
             labelCell.value = '총 이수 누적시간';
             labelCell.font = { name: '맑은 고딕', size: 10, bold: true };
             labelCell.alignment = { vertical: 'middle', horizontal: 'center' };
-            labelCell.fill = {
-                type: 'pattern',
-                pattern: 'solid',
-                fgColor: { argb: 'FFF2F2F2' }
-            };
+            labelCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF2F2F2' } };
 
             const lastRowIndex = data.length + 3;
             worksheet.mergeCells(`B2:C2`);
@@ -828,11 +776,7 @@
                 cell.value = text;
                 cell.font = { name: '맑은 고딕', size: 11, bold: true };
                 cell.alignment = { vertical: 'middle', horizontal: 'center' };
-                cell.fill = {
-                    type: 'pattern',
-                    pattern: 'solid',
-                    fgColor: { argb: 'FFD9E1F2' }
-                };
+                cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD9E1F2' } };
             });
 
             data.forEach((item, index) => {
@@ -840,21 +784,14 @@
                 const row = worksheet.getRow(rowIndex);
                 row.height = 20;
 
-                const nameCell = row.getCell(1);
-                nameCell.value = item.assistant_name;
-                nameCell.alignment = { vertical: 'middle', horizontal: 'center' };
-
-                const birthCell = row.getCell(2);
-                birthCell.value = item.birth_date;
-                birthCell.alignment = { vertical: 'middle', horizontal: 'center' };
-
-                const hoursCell = row.getCell(3);
-                hoursCell.value = parseInt(item.training_hours) || 0;
-                hoursCell.alignment = { vertical: 'middle', horizontal: 'center' };
-
-                const courseCell = row.getCell(4);
-                courseCell.value = item.course_name;
-                courseCell.alignment = { vertical: 'middle', horizontal: 'center' };
+                row.getCell(1).value = item.assistant_name;
+                row.getCell(1).alignment = { vertical: 'middle', horizontal: 'center' };
+                row.getCell(2).value = item.birth_date;
+                row.getCell(2).alignment = { vertical: 'middle', horizontal: 'center' };
+                row.getCell(3).value = parseInt(item.training_hours) || 0;
+                row.getCell(3).alignment = { vertical: 'middle', horizontal: 'center' };
+                row.getCell(4).value = item.course_name;
+                row.getCell(4).alignment = { vertical: 'middle', horizontal: 'center' };
             });
 
             worksheet.autoFilter = `A3:D${lastRowIndex}`;
